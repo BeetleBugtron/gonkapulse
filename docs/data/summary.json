@@ -1,0 +1,95 @@
+{
+  "project": "GonkaPulse",
+  "generated_at": "2026-10-05T12:04:04.107473Z",
+  "provider": {
+    "name": "Gonka Router",
+    "model": "zai-org/GLM-5.3-Flash",
+    "url": "https://api.gonkarouter.io/v1/chat/completions"
+  },
+  "pricing": {
+    "usd_per_million_tokens": 0.0023,
+    "heavy_agent": {
+      "input_tokens": 100000,
+      "output_tokens": 20000,
+      "total_tokens": 120000,
+      "cost_usd": 0.000276,
+      "cost_1k_turns_usd": 0.27599999999999997,
+      "cost_10k_turns_usd": 2.76,
+      "cost_100k_turns_usd": 27.599999999999998
+    }
+  },
+  "current": {
+    "ts": "2026-10-05T12:04:04.106733Z",
+    "provider": "gonkarouter",
+    "name": "Gonka Router",
+    "requested_model": "zai-org/GLM-5.3-Flash",
+    "status": "missing_secret",
+    "http": null
+  },
+  "last_24h": {
+    "checks": 1,
+    "successful_checks": 0,
+    "success_pct": 0.0,
+    "rate_limited_checks": 0,
+    "rate_limited_pct": 0.0,
+    "timeout_checks": 0,
+    "timeout_pct": 0.0,
+    "failure_checks": 1,
+    "p50_latency_ms": null,
+    "p95_latency_ms": null,
+    "p99_latency_ms": null,
+    "p50_ttfb_ms": null,
+    "p95_ttfb_ms": null,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "reasoning_tokens": 0,
+    "total_tokens": 0,
+    "cost_usd": 0
+  },
+  "last_7d": {
+    "checks": 1,
+    "successful_checks": 0,
+    "success_pct": 0.0,
+    "rate_limited_checks": 0,
+    "rate_limited_pct": 0.0,
+    "timeout_checks": 0,
+    "timeout_pct": 0.0,
+    "failure_checks": 1,
+    "p50_latency_ms": null,
+    "p95_latency_ms": null,
+    "p99_latency_ms": null,
+    "p50_ttfb_ms": null,
+    "p95_ttfb_ms": null,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "reasoning_tokens": 0,
+    "total_tokens": 0,
+    "cost_usd": 0
+  },
+  "all_time": {
+    "checks": 1,
+    "successful_checks": 0,
+    "success_pct": 0.0,
+    "rate_limited_checks": 0,
+    "rate_limited_pct": 0.0,
+    "timeout_checks": 0,
+    "timeout_pct": 0.0,
+    "failure_checks": 1,
+    "p50_latency_ms": null,
+    "p95_latency_ms": null,
+    "p99_latency_ms": null,
+    "p50_ttfb_ms": null,
+    "p95_ttfb_ms": null,
+    "prompt_tokens": 0,
+    "completion_tokens": 0,
+    "reasoning_tokens": 0,
+    "total_tokens": 0,
+    "cost_usd": 0
+  },
+  "monitoring_cost": {
+    "last_24h_usd": 0,
+    "projected_30d_usd": 0,
+    "last_24h_tokens": 0,
+    "projected_30d_tokens": 0
+  }
+}

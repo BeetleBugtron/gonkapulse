@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>GonkaPulse</title>
+
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#080a0f;
+  --card:#111620;
+  --card2:#0d1119;
+  --border:#252d3b;
+  --text:#f5f7fb;
+  --muted:#8d99aa;
+  --green:#3dde9d;
+  --yellow:#f1c75b;
+  --red:#ff6678;
+  --blue:#72a7ff;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:14px/1.45 Inter,system-ui,sans-serif;
+}
+
+main{
+  width:min(1200px,calc(100% - 28px));
+  margin:auto;
+  padding:48px 0 80px;
+}
+
+h1{
+  font-size:clamp(42px,7vw,72px);
+  letter-spacing:-.055em;
+  margin:0;
+}
+
+.subtitle{
+  color:var(--muted);
+  font-size:16px;
+  margin:8px 0 28px;
+}
+
+.hero,
+.card{
+  border:1px solid var(--border);
+  background:var(--card);
+  border-radius:16px;
+}
+
+.hero{
+  padding:28px;
+  margin-bottom:18px;
+}
+
+.eyebrow{
+  text-transform:uppercase;
+  letter-spacing:.12em;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:800;
+}
+
+.status{
+  font-size:clamp(64px,12vw,110px);
+  line-height:.95;
+  font-weight:900;
+  letter-spacing:-.06em;
+  margin:12px 0;
+}
+
+.up{
+  color:var(--green);
+}
+
+.rate_limited,
+.degraded{
+  color:var(--yellow);
+}
+
+.down,
+.timeout,
+.auth_error,
+.missing_secret,
+.error{
+  color:var(--red);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:
+    repeat(auto-fit,minmax(190px,1fr));
+  gap:12px;
+  margin:18px 0;
+}
+
+.card{
+  padding:18px;
+}
+
+.value{
+  font-size:30px;
+  font-weight:900;
+  margin-top:6px;
+}
+
+.money{
+  color:var(--green);
+}
+
+.section{
+  margin-top:28px;
+}
+
+.section h2{
+  font-size:22px;
+  margin-bottom:12px;
+}
+
+.bars{
+  display:flex;
+  height:36px;
+  gap:1px;
+  margin-top:12px;
+}
+
+.bar{
+  flex:1;
+  min-width:1px;
+}
+
+.bar.up{
+  background:var(--green);
+}
+
+.bar.rate_limited{
+  background:var(--yellow);
+}
+
+.bar.degraded{
+  background:#df9b45;
+}
+
+.bar.timeout,
+.bar.down,
+.bar.auth_error,
+.bar.error{
+  background:var(--red);
+}
+
+details{
+  margin-top:14px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:var(--card);
+}
+
+summary{
+  cursor:pointer;
+  padding:16px 18px;
+  font-weight:800;
+}
+
+.body{
+  padding:0 18px 18px;
+  overflow:auto;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  min-width:900px;
+}
+
+th,
+td{
+  text-align:left;
+  padding:9px;
+  border-bottom:1px solid #202735;
+  font-variant-numeric:tabular-nums;
+}
+
+th{
+  color:var(--muted);
+  font-size:11px;
+  text-transform:uppercase;
+}
+
+.note,
+footer{
+  color:var(--muted);
+  font-size:12px;
+}
+
+footer{
+  margin-top:30px;
+}
+</style>
+</head>
+
+<body>
+<main>
+
+<h1>GonkaPulse</h1>
+
+<div class="subtitle">
+  GLM-5.3-Flash via Gonka Router · availability,
+  latency, token usage and actual monitoring cost.
+</div>
+
+<section class="hero">
+
+  <div class="eyebrow">
+    Current status
+  </div>
+
+  <div
+    class="status"
+    id="status"
+  >
+    —
+  </div>
+
+  <div class="grid">
+
+    <div class="card">
+      <div class="eyebrow">
+        P95 latency · 24h
+      </div>
+      <div
+        class="value"
+        id="p95"
+      >
+        —
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">
+        Success · 24h
+      </div>
+      <div
+        class="value"
+        id="success"
+      >
+        —
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">
+        Tokens · 24h
+      </div>
+      <div
+        class="value"
+        id="tokens"
+      >
+        —
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">
+        Monitoring cost · 24h
+      </div>
+      <div
+        class="value money"
+        id="cost"
+      >
+        —
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<section class="section">
+
+<h2>Gonka economics</h2>
+
+<div class="grid">
+
+  <div class="card">
+    <div class="eyebrow">
+      Price / 1M tokens
+    </div>
+    <div
+      class="value money"
+      id="price"
+    >
+      —
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">
+      120K-token agent turn
+    </div>
+    <div
+      class="value money"
+      id="agent"
+    >
+      —
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">
+      10K heavy turns
+    </div>
+    <div
+      class="value money"
+      id="turn10k"
+    >
+      —
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">
+      Projected monitoring · 30d
+    </div>
+    <div
+      class="value money"
+      id="monthly"
+    >
+      —
+    </div>
+  </div>
+
+</div>
+
+</section>
+
+
+<section class="section">
+
+  <h2>Token usage · 24h</h2>
+
+  <div class="grid">
+
+    <div class="card">
+      <div class="eyebrow">
+        Prompt
+      </div>
+      <div
+        class="value"
+        id="promptTokens"
+      >
+        —
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">
+        Completion
+      </div>
+      <div
+        class="value"
+        id="completionTokens"
+      >
+        —
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">
+        Reasoning
+      </div>
+      <div
+        class="value"
+        id="reasoningTokens"
+      >
+        —
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="eyebrow">
+        Total
+      </div>
+      <div
+        class="value"
+        id="totalTokens"
+      >
+        —
+      </div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<section class="section">
+
+  <h2>Recent observations</h2>
+
+  <div
+    class="bars"
+    id="timeline"
+  ></div>
+
+</section>
+
+
+<details>
+
+  <summary>
+    Every retained measurement
+  </summary>
+
+  <div class="body">
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Status</th>
+          <th>HTTP</th>
+          <th>Latency</th>
+          <th>TTFB</th>
+          <th>Prompt</th>
+          <th>Completion</th>
+          <th>Reasoning</th>
+          <th>Total</th>
+          <th>Cost</th>
+        </tr>
+      </thead>
+
+      <tbody id="history"></tbody>
+
+    </table>
+
+  </div>
+
+</details>
+
+<footer id="footer"></footer>
+
+</main>
+
+
+<script>
+
+const e = x =>
+  String(x ?? "—")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;");
+
+const n = x =>
+  x == null
+    ? "—"
+    : Number(x).toLocaleString(
+        undefined,
+        {maximumFractionDigits:3}
+      );
+
+const usd = x =>
+  x == null
+    ? "—"
+    : "$" + Number(x).toLocaleString(
+        undefined,
+        {
+          minimumFractionDigits:
+            Number(x) < 0.01 ? 6 : 2,
+
+          maximumFractionDigits:
+            Number(x) < 0.01 ? 8 : 2
+        }
+      );
+
+
+async function load(){
+
+  const t = Date.now();
+
+  const [s,m] = await Promise.all([
+
+    fetch(
+      `data/summary.json?${t}`
+    ).then(r => r.json()),
+
+    fetch(
+      `data/measurements.json?${t}`
+    ).then(r => r.json())
+
+  ]);
+
+
+  const current = s.current || {};
+  const d = s.last_24h || {};
+  const pricing = s.pricing || {};
+  const agent = pricing.heavy_agent || {};
+  const monitoring = s.monitoring_cost || {};
+
+
+  const status =
+    document.querySelector("#status");
+
+  status.textContent =
+    String(
+      current.status || "unknown"
+    ).toUpperCase();
+
+  status.className =
+    `status ${e(current.status)}`;
+
+
+  document.querySelector(
+    "#p95"
+  ).textContent =
+    d.p95_latency_ms == null
+      ? "—"
+      : n(d.p95_latency_ms) + " ms";
+
+
+  document.querySelector(
+    "#success"
+  ).textContent =
+    d.success_pct == null
+      ? "—"
+      : n(d.success_pct) + "%";
+
+
+  document.querySelector(
+    "#tokens"
+  ).textContent =
+    n(d.total_tokens);
+
+
+  document.querySelector(
+    "#cost"
+  ).textContent =
+    usd(d.cost_usd);
+
+
+  document.querySelector(
+    "#price"
+  ).textContent =
+    usd(
+      pricing.usd_per_million_tokens
+    );
+
+
+  document.querySelector(
+    "#agent"
+  ).textContent =
+    usd(agent.cost_usd);
+
+
+  document.querySelector(
+    "#turn10k"
+  ).textContent =
+    usd(agent.cost_10k_turns_usd);
+
+
+  document.querySelector(
+    "#monthly"
+  ).textContent =
+    usd(
+      monitoring.projected_30d_usd
+    );
+
+
+  document.querySelector(
+    "#promptTokens"
+  ).textContent =
+    n(d.prompt_tokens);
+
+
+  document.querySelector(
+    "#completionTokens"
+  ).textContent =
+    n(d.completion_tokens);
+
+
+  document.querySelector(
+    "#reasoningTokens"
+  ).textContent =
+    n(d.reasoning_tokens);
+
+
+  document.querySelector(
+    "#totalTokens"
+  ).textContent =
+    n(d.total_tokens);
+
+
+  const rows =
+    m.measurements || [];
+
+
+  const recent =
+    rows.slice(-288);
+
+
+  document.querySelector(
+    "#timeline"
+  ).innerHTML =
+    recent.map(
+      r =>
+        `<i
+          class="bar ${e(r.status)}"
+          title="${e(r.ts)} · ${e(r.status)} · ${n(r.latency_ms)} ms"
+        ></i>`
+    ).join("");
+
+
+  document.querySelector(
+    "#history"
+  ).innerHTML =
+    rows
+      .slice()
+      .reverse()
+      .map(
+        r => `
+          <tr>
+
+            <td>${e(r.ts)}</td>
+
+            <td class="${e(r.status)}">
+              ${e(r.status)}
+            </td>
+
+            <td>${e(r.http)}</td>
+
+            <td>
+              ${n(r.latency_ms)} ms
+            </td>
+
+            <td>
+              ${n(r.ttfb_ms)} ms
+            </td>
+
+            <td>
+              ${n(r.prompt_tokens)}
+            </td>
+
+            <td>
+              ${n(r.completion_tokens)}
+            </td>
+
+            <td>
+              ${n(r.reasoning_tokens)}
+            </td>
+
+            <td>
+              ${n(r.total_tokens)}
+            </td>
+
+            <td class="money">
+              ${usd(r.cost_usd)}
+            </td>
+
+          </tr>
+        `
+      ).join("");
+
+
+  document.querySelector(
+    "#footer"
+  ).textContent =
+    "Updated "
+    + new Date(
+        s.generated_at
+      ).toLocaleString()
+    + " · zai-org/GLM-5.3-Flash · "
+    + "$0.0023 / 1M tokens";
+
+}
+
+
+load();
+
+setInterval(
+  load,
+  60000
+);
+
+</script>
+
+</body>
+</html>

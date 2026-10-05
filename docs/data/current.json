@@ -1,0 +1,12 @@
+{
+  "project": "GonkaPulse",
+  "generated_at": "2026-10-05T12:04:04.107319Z",
+  "provider": {
+    "ts": "2026-10-05T12:04:04.106733Z",
+    "provider": "gonkarouter",
+    "name": "Gonka Router",
+    "requested_model": "zai-org/GLM-5.3-Flash",
+    "status": "missing_secret",
+    "http": null
+  }
+}
