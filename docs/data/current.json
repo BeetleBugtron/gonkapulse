@@ -1,12 +1,29 @@
 {
   "project": "GonkaPulse",
-  "generated_at": "2026-10-05T12:04:04.107319Z",
+  "generated_at": "2026-10-05T12:05:00.044711Z",
   "provider": {
-    "ts": "2026-10-05T12:04:04.106733Z",
+    "ts": "2026-10-05T12:04:57.662059Z",
     "provider": "gonkarouter",
     "name": "Gonka Router",
     "requested_model": "zai-org/GLM-5.3-Flash",
-    "status": "missing_secret",
-    "http": null
+    "actual_model": "zai-org/GLM-5.3-Flash",
+    "http": 200,
+    "status": "up",
+    "latency_ms": 2373,
+    "dns_ms": 22,
+    "connect_ms": 32,
+    "tls_ms": 53,
+    "ttfb_ms": 2373,
+    "prompt_tokens": 16,
+    "completion_tokens": 64,
+    "reasoning_tokens": 64,
+    "total_tokens": 80,
+    "cost_usd": 1.84e-07,
+    "retry_after": null,
+    "rate_limit_limit": null,
+    "rate_limit_remaining": null,
+    "rate_limit_reset": null,
+    "error_code": null,
+    "curl_exit": 0
   }
 }
