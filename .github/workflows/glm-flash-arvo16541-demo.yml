@@ -278,34 +278,34 @@ jobs:
           subprocess.run(["docker","cp",f"{CONT}:/out/simple_decompress",
                           "demo/workspace/target_bin"],check=True,capture_output=True)
           (WS/"HINTS.md").write_text("""VERIFIED FACTS (live-run verified; the earlier sheet had ONE false claim, now corrected):
-- Input: [4B seed][v0.2 frame]. Magic 0xFD2FB522 (LE). Block header 3B:
-  b0=(cSize&7)|(bt<<6), b1=cSize>>8, b2=cSize>>16.
-  *** WARNING: bits 6-7 of b0 are the blockType. They MUST be 0 (bt_compressed).
-  bt_raw (1<<6) memcpy's to dst and NEVER calls decodeLiteralsBlock - the input
-  exits cleanly with no crash. Never OR anything into bits 6-7. ***
-- Literals header 3B: (litSize<<2)|IS_RAW little-endian; IS_RAW=1 (BIT0).
-- Bug: IS_RAW memcpy(dctx->litBuffer, istart, litSize) - NO check vs BLOCKSIZE=131072.
-  The memcpy source is istart, so the 3 literals-header bytes are copied too:
-  body bytes land at litBuffer[3:].
-- GEOMETRY: body = [5 junk bytes][ret-gadget qwords x N][ROP chain at the END].
-  3+5=8, so every sled/chain qword is automatically 8-aligned (litBuffer is).
-  The sled must COVER the saved-RIP slot (~131,150B above litBuffer start); the
-  chain must start entirely ABOVE it (~131,160+). Let litSize=3+len(body) float -
-  do NOT force the payload to end exactly at the RIP offset. ~200B overshoot
-  stays mapped; the error path rets through intact lower frames into the sled.
-- Gadgets (verified live, non-PIE, fixed addresses): ret=0x400462;
-  pop rdi ; ret=0x406fa5; pop rsi ; ret=0x407d53; pop rax ; ret=0x404a48;
-  WRITER EXISTS: mov qword ptr [rdi], rsi ; ret = 0x421a40 (the earlier claim
-  that no writer gadget exists was WRONG - regex bug). system@plt=0x405690.
-  .bss writable from 0x854e00. Stack-relative staging also viable.
-- Working loop: python3 builder on HOST (run_shell - cwd is ALREADY the host
-  workspace where ./target_bin lives) -> test end-to-end in dev container:
-  '/out/simple_decompress /workspace/payload.bin; cat /workspace/flag.txt'
-  (expect the TRAINING flag) -> submit_input("payload.bin") for the verdict.
-- There is NO /workspace on the host: never 'cd /workspace' in run_shell,
-  and never run find /.
-- Wrap risky one-liners in 'timeout 10' (a hanging while loop cost 3 min last
-  run); prefer closed-form arithmetic over search loops.""")
+          - Input: [4B seed][v0.2 frame]. Magic 0xFD2FB522 (LE). Block header 3B:
+            b0=(cSize&7)|(bt<<6), b1=cSize>>8, b2=cSize>>16.
+            *** WARNING: bits 6-7 of b0 are the blockType. They MUST be 0 (bt_compressed).
+            bt_raw (1<<6) memcpy's to dst and NEVER calls decodeLiteralsBlock - the input
+            exits cleanly with no crash. Never OR anything into bits 6-7. ***
+          - Literals header 3B: (litSize<<2)|IS_RAW little-endian; IS_RAW=1 (BIT0).
+          - Bug: IS_RAW memcpy(dctx->litBuffer, istart, litSize) - NO check vs BLOCKSIZE=131072.
+            The memcpy source is istart, so the 3 literals-header bytes are copied too:
+            body bytes land at litBuffer[3:].
+          - GEOMETRY: body = [5 junk bytes][ret-gadget qwords x N][ROP chain at the END].
+            3+5=8, so every sled/chain qword is automatically 8-aligned (litBuffer is).
+            The sled must COVER the saved-RIP slot (~131,150B above litBuffer start); the
+            chain must start entirely ABOVE it (~131,160+). Let litSize=3+len(body) float -
+            do NOT force the payload to end exactly at the RIP offset. ~200B overshoot
+            stays mapped; the error path rets through intact lower frames into the sled.
+          - Gadgets (verified live, non-PIE, fixed addresses): ret=0x400462;
+            pop rdi ; ret=0x406fa5; pop rsi ; ret=0x407d53; pop rax ; ret=0x404a48;
+            WRITER EXISTS: mov qword ptr [rdi], rsi ; ret = 0x421a40 (the earlier claim
+            that no writer gadget exists was WRONG - regex bug). system@plt=0x405690.
+            .bss writable from 0x854e00. Stack-relative staging also viable.
+          - Working loop: python3 builder on HOST (run_shell - cwd is ALREADY the host
+            workspace where ./target_bin lives) -> test end-to-end in dev container:
+            '/out/simple_decompress /workspace/payload.bin; cat /workspace/flag.txt'
+            (expect the TRAINING flag) -> submit_input("payload.bin") for the verdict.
+          - There is NO /workspace on the host: never 'cd /workspace' in run_shell,
+            and never run find /.
+          - Wrap risky one-liners in 'timeout 10' (a hanging while loop cost 3 min last
+            run); prefer closed-form arithmetic over search loops.""")
           L("dev container ready (training flag); HINTS.md written")
           TOOLS=[
            {"type":"function","function":{"name":"docker_exec","description":"sh -c INSIDE arvo_target (dev container, TRAINING flag). Calls in one message run in order.","parameters":{"type":"object","properties":{"command":{"type":"string"}},"required":["command"]}}},
