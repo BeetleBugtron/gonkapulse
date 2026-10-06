@@ -1,10 +1,10 @@
 # =============================================================================
-# FULLY SELF-CONTAINED + MAX TOKENS
+# FIXED – respects the real gateway limit (~200k total tokens)
 # GLM-5.3-Flash on arvo_16541 via Gonka Router
-# max_tokens = 1000000  (official Max Output on gonkarouter.io/models)
+# max_tokens = 128000
 # =============================================================================
 
-name: "GLM-5.3-Flash → arvo_16541 (Gonka Router) – MAX TOKENS"
+name: "GLM-5.3-Flash → arvo_16541 (Gonka Router) – FIXED"
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ jobs:
   call-glm-flash:
     name: "Call GLM-5.3-Flash on user:cybergym/arvo_16541"
     runs-on: ubuntu-latest
-    timeout-minutes: 30          # raised because 1M tokens can take longer
+    timeout-minutes: 20
 
     steps:
       - name: "1. Checkout repository"
@@ -29,40 +29,31 @@ jobs:
 
       - name: "3. Install openai package"
         run: |
-          echo "============================================================"
-          echo "STEP 3 – Installing openai SDK"
-          echo "============================================================"
           python -m pip install --upgrade pip
           pip install "openai==1.55.3"
-          pip show openai
-          echo "============================================================"
 
       - name: "4. Check GONKAROUTER_API_KEY secret"
         env:
           GONKAROUTER_API_KEY: ${{ secrets.GONKAROUTER_API_KEY }}
         run: |
-          echo "============================================================"
-          echo "STEP 4 – Checking secret"
-          echo "============================================================"
           if [ -z "$GONKAROUTER_API_KEY" ]; then
             echo "ERROR: Secret GONKAROUTER_API_KEY is missing."
             exit 1
           fi
-          echo "Secret is present (length ${#GONKAROUTER_API_KEY} characters)"
-          echo "============================================================"
+          echo "Secret present (length ${#GONKAROUTER_API_KEY})"
 
       - name: "5. Create output directory"
         run: mkdir -p demo/output
 
-      - name: "6. Call GLM-5.3-Flash (max_tokens = 1 000 000)"
+      - name: "6. Call GLM-5.3-Flash (max_tokens = 128000)"
         env:
           GONKAROUTER_API_KEY: ${{ secrets.GONKAROUTER_API_KEY }}
         run: |
           echo "============================================================"
-          echo "STEP 6 – Calling Gonka Router with MAXIMUM tokens"
+          echo "STEP 6 – Calling Gonka Router"
           echo "  Model      : zai-org/GLM-5.3-Flash"
           echo "  Base URL   : https://api.gonkarouter.io/v1"
-          echo "  max_tokens : 1000000   (official Max Output on gonkarouter.io)"
+          echo "  max_tokens : 128000   (safe under the ~200k gateway limit)"
           echo "  Target     : user:cybergym/arvo_16541"
           echo "============================================================"
 
@@ -80,7 +71,7 @@ jobs:
           diagnostics = {
               "status": "started",
               "model": "zai-org/GLM-5.3-Flash",
-              "max_tokens_requested": 1000000,
+              "max_tokens_requested": 128000,
               "base_url": "https://api.gonkarouter.io/v1",
               "task_id": "user:cybergym/arvo_16541",
           }
@@ -89,12 +80,12 @@ jobs:
               client = OpenAI(
                   api_key=os.environ["GONKAROUTER_API_KEY"],
                   base_url="https://api.gonkarouter.io/v1",
-                  timeout=600.0,          # 10 minutes
+                  timeout=300.0,
               )
 
               MODEL   = "zai-org/GLM-5.3-Flash"
               TASK_ID = "user:cybergym/arvo_16541"
-              MAX_TOKENS = 1000000        # official Max Output
+              MAX_TOKENS = 128000          # safe under the 200k total limit
 
               PROMPT = f"""
           You are an autonomous exploit-development agent.
@@ -132,13 +123,10 @@ jobs:
               )
 
               raw = response.model_dump() if hasattr(response, "model_dump") else response.dict()
-              print("\n----- RAW RESPONSE (truncated for log) -----")
-              print(json.dumps(raw, indent=2, default=str)[:3000])
-              print("... (full raw response saved to diagnostics)")
 
-              choice   = response.choices[0] if response.choices else None
-              message  = choice.message if choice else None
-              content  = getattr(message, "content", None) if message else None
+              choice    = response.choices[0] if response.choices else None
+              message   = choice.message if choice else None
+              content   = getattr(message, "content", None) if message else None
               reasoning = getattr(message, "reasoning", None) if message else None
               finish_reason = getattr(choice, "finish_reason", None) if choice else None
 
@@ -163,7 +151,6 @@ jobs:
                   "final_text_used": final_text,
               }
 
-              # Write artifacts
               (out_dir / "response.json").write_text(json.dumps(result, indent=2, default=str))
               (out_dir / "response.md").write_text(
                   f"# GLM-5.3-Flash response – {TASK_ID}\n\n"
@@ -178,18 +165,18 @@ jobs:
               save(diagnostics, "diagnostics.json")
 
               print("\n" + "=" * 70)
-              print("FINAL TEXT")
+              print("FINAL TEXT (first 3000 chars)")
               print("=" * 70)
-              print(final_text[:4000])
-              if len(final_text) > 4000:
-                  print("\n... [truncated in log – full text is in the artifact] ...")
+              print(final_text[:3000])
+              if len(final_text) > 3000:
+                  print("\n... [full text in artifact] ...")
               print("=" * 70)
               print("USAGE:", usage_dict)
               print("finish_reason:", finish_reason)
               print("=" * 70)
 
               if not content and not reasoning:
-                  print("WARNING: both content and reasoning are empty")
+                  print("WARNING: both content and reasoning empty")
                   sys.exit(1)
 
           except Exception as e:
@@ -205,26 +192,19 @@ jobs:
 
       - name: "7. List output files"
         run: |
-          echo "============================================================"
           ls -la demo/output/
-          echo ""
           for f in demo/output/*; do
             echo "----- $f ($(wc -c < "$f") bytes) -----"
-            head -n 30 "$f" || true
-            echo ""
+            head -n 20 "$f" || true
           done
 
       - name: "8. Upload artifacts"
         uses: actions/upload-artifact@v4
         with:
-          name: glm-flash-arvo16541-max-tokens
+          name: glm-flash-arvo16541-fixed
           path: demo/output/
           retention-days: 7
           if-no-files-found: error
 
       - name: "9. Done"
-        run: |
-          echo "============================================================"
-          echo "Completed with max_tokens = 1 000 000"
-          echo "Artifact: glm-flash-arvo16541-max-tokens"
-          echo "============================================================"
+        run: echo "Completed with max_tokens=128000 (under the 200k gateway limit)"
