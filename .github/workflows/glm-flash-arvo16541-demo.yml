@@ -12,7 +12,7 @@
 #      dropped (rejected by some backends).
 # Everything else unchanged from v9 (gate + loop proven green end-to-end).
 # =============================================================================
-name: "arvo_16541 - self-verifying marathon"
+name: "arvo_16541 – self-verifying marathon"
 on:
   workflow_dispatch:
     inputs:
