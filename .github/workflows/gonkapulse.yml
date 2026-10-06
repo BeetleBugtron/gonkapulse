@@ -2,7 +2,6 @@ name: GonkaPulse
 
 on:
   workflow_dispatch:
-
   schedule:
     - cron: "2-57/5 * * * *"
 
@@ -29,1527 +28,659 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
 
       - name: Probe Gonka Router and rebuild dashboard
         shell: bash
         run: |
           set -euo pipefail
 
-          # Refresh main because scheduled jobs can queue.
           git fetch origin main
           git reset --hard origin/main
 
-          mkdir -p docs/data/history
-
           cat > /tmp/gonkapulse.py <<'PY'
-          import os
           import json
-          import time
-          import tempfile
+          import os
+          import secrets
           import subprocess
-          from pathlib import Path
+          import tempfile
+          import time
+          from collections import Counter
           from datetime import datetime, timezone, timedelta
-
-
-          # ============================================================
-          # CONFIG
-          # ============================================================
+          from pathlib import Path
 
           NAME = "Gonka Router"
           URL = "https://api.gonkarouter.io/v1/chat/completions"
           MODEL = "zai-org/GLM-5.3-Flash"
-
           API_KEY = os.environ.get("GONKAROUTER_API_KEY", "")
 
-          # User-supplied Gonka Router price:
-          # $0.0023 per 1,000,000 tokens.
+          # User-configured price estimate, not invoice-derived cost.
           PRICE_PER_MILLION_TOKENS = 0.0023
-
           CONNECT_TIMEOUT = 10
           REQUEST_TIMEOUT = 30
 
           ROOT = Path("docs")
           DATA = ROOT / "data"
           HISTORY = DATA / "history"
-
-          CURRENT = DATA / "current.json"
-          SUMMARY = DATA / "summary.json"
-          MEASUREMENTS = DATA / "measurements.json"
-
-          ROOT.mkdir(parents=True, exist_ok=True)
-          DATA.mkdir(parents=True, exist_ok=True)
           HISTORY.mkdir(parents=True, exist_ok=True)
-
-
-          # ============================================================
-          # HELPERS
-          # ============================================================
 
           def now():
               return datetime.now(timezone.utc)
 
-
           def iso(dt=None):
               return (dt or now()).isoformat().replace("+00:00", "Z")
 
-
           def parse_ts(value):
-              return datetime.fromisoformat(
-                  value.replace("Z", "+00:00")
-              )
-
+              return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
           def safe_int(value):
               try:
                   return int(value)
-              except Exception:
+              except (ValueError, TypeError):
                   return None
-
 
           def safe_float(value):
               try:
                   return float(value)
-              except Exception:
+              except (ValueError, TypeError):
                   return None
-
 
           def percentile(values, fraction):
               if not values:
                   return None
-
               values = sorted(values)
-
-              i = round(
-                  (len(values) - 1) * fraction
-              )
-
-              return values[i]
-
+              return values[round((len(values) - 1) * fraction)]
 
           def pct(n, d):
               return round(n / d * 100, 3) if d else None
 
-
-          def read_file(path):
-              try:
-                  return Path(path).read_text(errors="replace")
-              except Exception:
-                  return ""
-
-
           def parse_headers(raw):
               result = {}
-
               for line in raw.splitlines():
-                  if ":" not in line:
-                      continue
-
-                  key, value = line.split(":", 1)
-                  result[key.strip().lower()] = value.strip()
-
+                  # Reset when a new HTTP response block begins.
+                  if line.upper().startswith("HTTP/"):
+                      result = {}
+                  elif ":" in line:
+                      key, value = line.split(":", 1)
+                      result[key.strip().lower()] = value.strip()
               return result
 
+          def classify(http, curl_exit, body, headers, expected):
+              if curl_exit == 28:
+                  return "timeout", "curl_timeout"
 
-          def classify(http, error_code, error_message):
-              text = (
-                  f"{error_code or ''} "
-                  f"{error_message or ''}"
-              ).lower()
+              if curl_exit != 0:
+                  return "transport_error", "curl_transport_error"
 
-              if http == 200:
-                  return "up"
+              error = body.get("error") if isinstance(body, dict) else None
+              code = error.get("code") if isinstance(error, dict) else None
 
-              if http == 429:
-                  return "rate_limited"
-
-              if http in (500, 502, 503, 504):
-                  return "down"
+              # Upstream capacity failures are availability failures,
+              # even when returned with HTTP 429.
+              if code in ("upstream_saturated", "service_unavailable"):
+                  return "down", None
 
               if http in (401, 403):
-                  return "auth_error"
+                  return "auth_error", None
+
+              if http == 429:
+                  return "rate_limited", None
+
+              if http in (500, 502, 503, 504):
+                  return "down", None
 
               if http is None:
-                  return "timeout"
+                  return "transport_error", "missing_http_status"
 
-              return "degraded"
+              if http != 200:
+                  return "degraded", None
 
+              if not isinstance(body, dict):
+                  return "invalid_response", "invalid_json_object"
 
-          # ============================================================
-          # PROBE
-          # ============================================================
+              if "error" in body:
+                  return "invalid_response", "error_in_success_response"
+
+              if "x-gonka-fallback" in headers:
+                  return "model_mismatch", "fallback_reported"
+
+              actual_model = body.get("model")
+              if not isinstance(actual_model, str) or not actual_model:
+                  return "invalid_response", "missing_model"
+
+              if actual_model != MODEL:
+                  return "model_mismatch", "unexpected_model"
+
+              if body.get("object") != "chat.completion":
+                  return "invalid_response", "unexpected_object"
+
+              choices = body.get("choices")
+              if (
+                  not isinstance(choices, list)
+                  or len(choices) != 1
+                  or not isinstance(choices[0], dict)
+              ):
+                  return "invalid_response", "invalid_choices"
+
+              choice = choices[0]
+              message = choice.get("message")
+              if (
+                  choice.get("index") != 0
+                  or not isinstance(message, dict)
+                  or message.get("role") != "assistant"
+              ):
+                  return "invalid_response", "invalid_message"
+
+              if choice.get("finish_reason") != "stop":
+                  return "invalid_response", "incomplete_completion"
+
+              content = message.get("content")
+              if not isinstance(content, str) or content.strip() != expected:
+                  return "invalid_response", "unexpected_content"
+
+              return "up", None
 
           def probe():
-              timestamp = now()
-
               record = {
-                  "ts": iso(timestamp),
+                  "ts": iso(),
                   "provider": "gonkarouter",
                   "name": NAME,
                   "requested_model": MODEL,
+                  "probe_version": 2,
+                  "fallback_disabled": True,
               }
 
               if not API_KEY:
-                  record.update({
+                  return {
+                      **record,
                       "status": "missing_secret",
                       "http": None,
-                  })
-                  return record
+                      "error_code": "missing_secret",
+                  }
 
-              # Tiny heartbeat.
-              #
-              # The prompt intentionally asks for the smallest useful
-              # completion possible so monitoring itself stays cheap.
+              # A unique challenge avoids reusing a constant response.
+              expected = "OK " + secrets.token_hex(8)
               payload = {
                   "model": MODEL,
-                  "messages": [
-                      {
-                          "role": "user",
-                          "content": "Reply only OK."
-                      }
-                  ],
-                  "max_tokens": 40,
+                  "messages": [{
+                      "role": "user",
+                      "content": f"Reply with exactly this text: {expected}",
+                  }],
+                  "temperature": 0,
+                  "seed": 0,
+                  "max_tokens": 256,
                   "stream": False,
               }
 
-              header_file = tempfile.NamedTemporaryFile(delete=False)
-              body_file = tempfile.NamedTemporaryFile(delete=False)
+              with tempfile.TemporaryDirectory() as directory:
+                  header_path = Path(directory) / "headers"
+                  body_path = Path(directory) / "body"
 
-              header_path = header_file.name
-              body_path = body_file.name
+                  cmd = [
+                      "curl", "-sS",
+                      "--connect-timeout", str(CONNECT_TIMEOUT),
+                      "--max-time", str(REQUEST_TIMEOUT),
+                      "-D", str(header_path),
+                      "-o", str(body_path),
+                      "-w",
+                      "%{http_code}\t%{time_namelookup}\t"
+                      "%{time_connect}\t%{time_appconnect}\t"
+                      "%{time_starttransfer}\t%{time_total}",
+                      URL,
+                      "-H", f"Authorization: Bearer {API_KEY}",
+                      "-H", "Content-Type: application/json",
+                      "-H", "X-Gonka-No-Fallback: true",
+                      "-d", json.dumps(payload),
+                  ]
 
-              header_file.close()
-              body_file.close()
+                  started = time.monotonic()
+                  try:
+                      proc = subprocess.run(
+                          cmd,
+                          capture_output=True,
+                          text=True,
+                          timeout=REQUEST_TIMEOUT + 5,
+                      )
+                  except subprocess.TimeoutExpired:
+                      return {
+                          **record,
+                          "status": "timeout",
+                          "http": None,
+                          "latency_ms": round(
+                              (time.monotonic() - started) * 1000
+                          ),
+                          "error_code": "subprocess_timeout",
+                      }
 
-              cmd = [
-                  "curl",
-                  "-sS",
-
-                  "--connect-timeout",
-                  str(CONNECT_TIMEOUT),
-
-                  "--max-time",
-                  str(REQUEST_TIMEOUT),
-
-                  "-D",
-                  header_path,
-
-                  "-o",
-                  body_path,
-
-                  "-w",
-                  (
-                      "%{http_code}\t"
-                      "%{time_namelookup}\t"
-                      "%{time_connect}\t"
-                      "%{time_appconnect}\t"
-                      "%{time_starttransfer}\t"
-                      "%{time_total}"
-                  ),
-
-                  URL,
-
-                  "-H",
-                  f"Authorization: Bearer {API_KEY}",
-
-                  "-H",
-                  "Content-Type: application/json",
-
-                  "-d",
-                  json.dumps(payload),
-              ]
-
-              wall_start = time.monotonic()
-
-              try:
-                  proc = subprocess.run(
-                      cmd,
-                      capture_output=True,
-                      text=True,
-                      timeout=REQUEST_TIMEOUT + 5,
+                  wall_ms = round((time.monotonic() - started) * 1000)
+                  raw_headers = (
+                      header_path.read_text(errors="replace")
+                      if header_path.exists() else ""
+                  )
+                  raw_body = (
+                      body_path.read_text(errors="replace")
+                      if body_path.exists() else ""
                   )
 
-              except subprocess.TimeoutExpired:
-                  return {
-                      **record,
-                      "status": "timeout",
-                      "http": None,
-                      "latency_ms": REQUEST_TIMEOUT * 1000,
-                      "error_code": "subprocess_timeout",
-                  }
-
-              wall_ms = round(
-                  (time.monotonic() - wall_start) * 1000
-              )
-
-              raw_headers = read_file(header_path)
-              raw_body = read_file(body_path)
-
-              try:
-                  os.unlink(header_path)
-              except Exception:
-                  pass
-
-              try:
-                  os.unlink(body_path)
-              except Exception:
-                  pass
-
               fields = proc.stdout.strip().split("\t")
-
               http = None
-              dns = None
-              connect = None
-              tls = None
-              ttfb = None
-              total = None
-
+              timings = [None] * 5
               if len(fields) >= 6:
-                  http = safe_int(fields[0])
-                  dns = safe_float(fields[1])
-                  connect = safe_float(fields[2])
-                  tls = safe_float(fields[3])
-                  ttfb = safe_float(fields[4])
-                  total = safe_float(fields[5])
-
-              if http == 0:
-                  http = None
+                  http = safe_int(fields[0]) or None
+                  timings = [safe_float(v) for v in fields[1:6]]
 
               try:
                   body = json.loads(raw_body)
-              except Exception:
-                  body = {}
+              except (ValueError, TypeError):
+                  body = None
 
-              actual_model = None
-              error_code = None
-              error_message = None
+              headers = parse_headers(raw_headers)
+              status, validation_error = classify(
+                  http, proc.returncode, body, headers, expected
+              )
 
-              prompt_tokens = None
-              completion_tokens = None
-              reasoning_tokens = None
-              total_tokens = None
+              parsed = body if isinstance(body, dict) else {}
+              error = parsed.get("error")
+              error = error if isinstance(error, dict) else {}
+              usage = parsed.get("usage")
+              usage = usage if isinstance(usage, dict) else {}
+              details = usage.get("completion_tokens_details")
+              details = details if isinstance(details, dict) else {}
 
-              if isinstance(body, dict):
-                  actual_model = body.get("model")
-
-                  error = body.get("error")
-
-                  if isinstance(error, dict):
-                      error_code = error.get("code")
-                      error_message = error.get("message")
-
-                  usage = body.get("usage")
-
-                  if isinstance(usage, dict):
-                      prompt_tokens = safe_int(
-                          usage.get("prompt_tokens")
-                      )
-
-                      completion_tokens = safe_int(
-                          usage.get("completion_tokens")
-                      )
-
-                      total_tokens = safe_int(
-                          usage.get("total_tokens")
-                      )
-
-                      details = usage.get(
-                          "completion_tokens_details"
-                      )
-
-                      if isinstance(details, dict):
-                          reasoning_tokens = safe_int(
-                              details.get("reasoning_tokens")
-                          )
-
-              # Fall back to prompt + completion if total is omitted.
+              prompt_tokens = safe_int(usage.get("prompt_tokens"))
+              completion_tokens = safe_int(usage.get("completion_tokens"))
+              total_tokens = safe_int(usage.get("total_tokens"))
               if (
                   total_tokens is None
                   and prompt_tokens is not None
                   and completion_tokens is not None
               ):
-                  total_tokens = (
-                      prompt_tokens + completion_tokens
-                  )
+                  total_tokens = prompt_tokens + completion_tokens
 
-              cost_usd = None
-
-              if total_tokens is not None:
-                  cost_usd = (
-                      total_tokens
-                      / 1_000_000
-                      * PRICE_PER_MILLION_TOKENS
-                  )
-
-              headers = parse_headers(raw_headers)
-
+              dns, connect, tls, ttfb, total = timings
               record.update({
-                  "actual_model": actual_model,
-
+                  "status": status,
                   "http": http,
-
-                  "status": classify(
-                      http,
-                      error_code,
-                      error_message,
+                  "actual_model": parsed.get("model"),
+                  "model_verified": status == "up",
+                  "validation_error": validation_error,
+                  "error_code": error.get("code") or validation_error,
+                  "error_type": error.get("type"),
+                  "error_message": (
+                      str(error["message"])[:500]
+                      if error.get("message") is not None else None
                   ),
-
+                  "curl_exit": proc.returncode,
+                  "fallback": headers.get("x-gonka-fallback"),
+                  "request_id": headers.get("x-request-id"),
+                  "completion_id": parsed.get("id"),
+                  "completion_created": parsed.get("created"),
+                  "system_fingerprint": parsed.get("system_fingerprint"),
                   "latency_ms": (
-                      round(total * 1000)
-                      if total is not None
-                      else wall_ms
+                      round(total * 1000) if total is not None else wall_ms
                   ),
-
-                  "dns_ms": (
-                      round(dns * 1000)
-                      if dns is not None
-                      else None
-                  ),
-
+                  "dns_ms": round(dns * 1000) if dns is not None else None,
                   "connect_ms": (
-                      round(connect * 1000)
-                      if connect is not None
-                      else None
+                      round(connect * 1000) if connect is not None else None
                   ),
-
-                  "tls_ms": (
-                      round(tls * 1000)
-                      if tls is not None
-                      else None
-                  ),
-
-                  "ttfb_ms": (
-                      round(ttfb * 1000)
-                      if ttfb is not None
-                      else None
-                  ),
-
+                  "tls_ms": round(tls * 1000) if tls is not None else None,
+                  "ttfb_ms": round(ttfb * 1000) if ttfb is not None else None,
                   "prompt_tokens": prompt_tokens,
                   "completion_tokens": completion_tokens,
-                  "reasoning_tokens": reasoning_tokens,
+                  "reasoning_tokens": safe_int(details.get("reasoning_tokens")),
                   "total_tokens": total_tokens,
-
-                  "cost_usd": cost_usd,
-
-                  "retry_after": safe_int(
-                      headers.get("retry-after")
+                  "cost_usd": (
+                      total_tokens / 1_000_000 * PRICE_PER_MILLION_TOKENS
+                      if total_tokens is not None else None
                   ),
-
+                  "retry_after": headers.get("retry-after"),
                   "rate_limit_limit": safe_int(
-                      headers.get("x-ratelimit-limit")
+                      headers.get("x-ratelimit-limit-requests")
+                      or headers.get("x-ratelimit-limit")
                   ),
-
                   "rate_limit_remaining": safe_int(
-                      headers.get("x-ratelimit-remaining")
+                      headers.get("x-ratelimit-remaining-requests")
+                      or headers.get("x-ratelimit-remaining")
                   ),
-
-                  "rate_limit_reset": safe_int(
-                      headers.get("x-ratelimit-reset")
+                  "rate_limit_reset": (
+                      headers.get("x-ratelimit-reset-requests")
+                      or headers.get("x-ratelimit-reset")
                   ),
-
-                  "error_code": error_code,
-                  "curl_exit": proc.returncode,
               })
-
-              if error_message:
-                  record["error_message"] = error_message[:500]
-
               return record
 
-
-          # ============================================================
-          # SAVE CURRENT PROBE
-          # ============================================================
-
           record = probe()
-
-          print()
-          print("=" * 80)
           print("GonkaPulse")
-          print("=" * 80)
-          print("Time:   ", record.get("ts"))
-          print("Status: ", record.get("status"))
-          print("HTTP:   ", record.get("http"))
-          print("Latency:", record.get("latency_ms"), "ms")
-          print("TTFB:   ", record.get("ttfb_ms"), "ms")
-          print("Tokens: ", record.get("total_tokens"))
-          print("Cost:   ", record.get("cost_usd"))
-          print()
+          for key in (
+              "ts", "status", "http", "requested_model", "actual_model",
+              "error_code", "error_message", "validation_error",
+              "latency_ms", "total_tokens", "cost_usd", "request_id",
+          ):
+              print(f"{key}: {record.get(key)}")
 
-          day = now().strftime("%Y/%m/%d")
-
-          history_file = (
-              HISTORY
-              / f"{day}.jsonl"
-          )
-
-          history_file.parent.mkdir(
-              parents=True,
-              exist_ok=True,
-          )
-
-          with history_file.open(
-              "a",
-              encoding="utf-8",
-          ) as f:
-              f.write(
-                  json.dumps(
-                      record,
-                      separators=(",", ":"),
-                      ensure_ascii=False,
-                  )
-                  + "\n"
-              )
-
-
-          # ============================================================
-          # LOAD ALL HISTORY
-          # ============================================================
+          history_file = HISTORY / f"{now():%Y/%m/%d}.jsonl"
+          history_file.parent.mkdir(parents=True, exist_ok=True)
+          with history_file.open("a", encoding="utf-8") as handle:
+              handle.write(json.dumps(record, separators=(",", ":")) + "\n")
 
           rows = []
-
           for path in HISTORY.rglob("*.jsonl"):
-
-              try:
-                  lines = path.read_text(
-                      errors="replace"
-                  ).splitlines()
-              except Exception:
-                  continue
-
-              for line in lines:
-                  line = line.strip()
-
-                  if not line:
-                      continue
-
+              for line in path.read_text(errors="replace").splitlines():
                   try:
                       row = json.loads(line)
+                      if not isinstance(row, dict):
+                          continue
                       parse_ts(row["ts"])
-                  except Exception:
+                  except (ValueError, TypeError, KeyError):
                       continue
-
                   rows.append(row)
 
-          rows.sort(
-              key=lambda r: r.get("ts", "")
-          )
+          rows.sort(key=lambda row: parse_ts(row["ts"]))
 
-
-          # ============================================================
-          # CURRENT
-          # ============================================================
-
-          CURRENT.write_text(
-              json.dumps(
-                  {
-                      "project": "GonkaPulse",
-                      "generated_at": iso(),
-                      "provider": record,
-                  },
-                  indent=2,
-                  ensure_ascii=False,
-              ),
-              encoding="utf-8",
-          )
-
-
-          # ============================================================
-          # STATS
-          # ============================================================
-
-          current_time = now()
-
-          cutoff_24h = (
-              current_time - timedelta(hours=24)
-          )
-
-          cutoff_7d = (
-              current_time - timedelta(days=7)
-          )
-
-          recent_24h = [
-              r for r in rows
-              if parse_ts(r["ts"]) >= cutoff_24h
+          # Preserve old records, but exclude them from the new strict
+          # availability statistics.
+          strict_rows = [
+              row for row in rows if row.get("probe_version") == 2
           ]
-
-          recent_7d = [
-              r for r in rows
-              if parse_ts(r["ts"]) >= cutoff_7d
-          ]
-
 
           def stats(entries):
               count = len(entries)
-
-              up = [
-                  r for r in entries
-                  if r.get("status") == "up"
-              ]
-
-              rate_limited = [
-                  r for r in entries
-                  if r.get("status") == "rate_limited"
-              ]
-
-              timeouts = [
-                  r for r in entries
-                  if r.get("status") == "timeout"
-              ]
-
-              failures = [
-                  r for r in entries
-                  if r.get("status") not in (
-                      "up",
-                      "rate_limited",
-                  )
-              ]
-
+              up = [r for r in entries if r.get("status") == "up"]
+              statuses = Counter(r.get("status", "unknown") for r in entries)
+              errors = Counter(
+                  str(r["error_code"]) for r in entries if r.get("error_code")
+              )
               latency = [
-                  r["latency_ms"]
-                  for r in up
-                  if isinstance(
-                      r.get("latency_ms"),
-                      (int, float),
-                  )
+                  r["latency_ms"] for r in up
+                  if isinstance(r.get("latency_ms"), (int, float))
               ]
-
               ttfb = [
-                  r["ttfb_ms"]
-                  for r in up
-                  if isinstance(
-                      r.get("ttfb_ms"),
-                      (int, float),
-                  )
+                  r["ttfb_ms"] for r in up
+                  if isinstance(r.get("ttfb_ms"), (int, float))
               ]
-
-              prompt_tokens = sum(
-                  r.get("prompt_tokens") or 0
-                  for r in entries
-              )
-
-              completion_tokens = sum(
-                  r.get("completion_tokens") or 0
-                  for r in entries
-              )
-
-              reasoning_tokens = sum(
-                  r.get("reasoning_tokens") or 0
-                  for r in entries
-              )
-
-              total_tokens = sum(
-                  r.get("total_tokens") or 0
-                  for r in entries
-              )
-
-              actual_cost = sum(
-                  r.get("cost_usd") or 0
-                  for r in entries
-              )
-
-              return {
+              result = {
                   "checks": count,
-
                   "successful_checks": len(up),
-
-                  "success_pct": pct(
-                      len(up),
-                      count,
-                  ),
-
-                  "rate_limited_checks":
-                      len(rate_limited),
-
-                  "rate_limited_pct": pct(
-                      len(rate_limited),
-                      count,
-                  ),
-
-                  "timeout_checks":
-                      len(timeouts),
-
-                  "timeout_pct": pct(
-                      len(timeouts),
-                      count,
-                  ),
-
-                  "failure_checks":
-                      len(failures),
-
-                  "p50_latency_ms":
-                      percentile(latency, 0.50),
-
-                  "p95_latency_ms":
-                      percentile(latency, 0.95),
-
-                  "p99_latency_ms":
-                      percentile(latency, 0.99),
-
-                  "p50_ttfb_ms":
-                      percentile(ttfb, 0.50),
-
-                  "p95_ttfb_ms":
-                      percentile(ttfb, 0.95),
-
-                  "prompt_tokens":
-                      prompt_tokens,
-
-                  "completion_tokens":
-                      completion_tokens,
-
-                  "reasoning_tokens":
-                      reasoning_tokens,
-
-                  "total_tokens":
-                      total_tokens,
-
-                  "cost_usd":
-                      actual_cost,
+                  "success_pct": pct(len(up), count),
+                  # Every unsuccessful check is an availability failure.
+                  "failure_checks": count - len(up),
+                  "rate_limited_checks": statuses["rate_limited"],
+                  "rate_limited_pct": pct(statuses["rate_limited"], count),
+                  "timeout_checks": statuses["timeout"],
+                  "timeout_pct": pct(statuses["timeout"], count),
+                  "upstream_saturated_checks": errors["upstream_saturated"],
+                  "status_counts": dict(statuses),
+                  "error_counts": dict(errors),
+                  "p50_latency_ms": percentile(latency, 0.50),
+                  "p95_latency_ms": percentile(latency, 0.95),
+                  "p99_latency_ms": percentile(latency, 0.99),
+                  "p50_ttfb_ms": percentile(ttfb, 0.50),
+                  "p95_ttfb_ms": percentile(ttfb, 0.95),
               }
+              for field in (
+                  "prompt_tokens", "completion_tokens", "reasoning_tokens",
+                  "total_tokens", "cost_usd",
+              ):
+                  result[field] = sum(r.get(field) or 0 for r in entries)
+              return result
 
-
+          current_time = now()
+          recent_24h = [
+              r for r in strict_rows
+              if parse_ts(r["ts"]) >= current_time - timedelta(hours=24)
+          ]
+          recent_7d = [
+              r for r in strict_rows
+              if parse_ts(r["ts"]) >= current_time - timedelta(days=7)
+          ]
           stats_24h = stats(recent_24h)
-          stats_7d = stats(recent_7d)
-          stats_all = stats(rows)
 
-
-          # ============================================================
-          # COST PROJECTIONS
-          # ============================================================
-
-          daily_cost = stats_24h["cost_usd"]
-
-          projected_30d = (
-              daily_cost * 30
-          )
-
-          daily_tokens = stats_24h["total_tokens"]
-
-          projected_30d_tokens = (
-              daily_tokens * 30
-          )
-
-
-          # ============================================================
-          # HEAVY AGENT COST MODEL
-          # ============================================================
-
-          AGENT_INPUT_TOKENS = 100_000
-          AGENT_OUTPUT_TOKENS = 20_000
-
-          AGENT_TOTAL_TOKENS = (
-              AGENT_INPUT_TOKENS
-              + AGENT_OUTPUT_TOKENS
-          )
-
-          AGENT_COST = (
-              AGENT_TOTAL_TOKENS
-              / 1_000_000
-              * PRICE_PER_MILLION_TOKENS
-          )
-
-
-          # ============================================================
-          # SUMMARY
-          # ============================================================
+          agent_tokens = 120_000
+          agent_cost = agent_tokens / 1_000_000 * PRICE_PER_MILLION_TOKENS
 
           summary = {
               "project": "GonkaPulse",
-
               "generated_at": iso(),
-
-              "provider": {
-                  "name": NAME,
-                  "model": MODEL,
-                  "url": URL,
-              },
-
+              "probe_version": 2,
+              "statistics_note": "Availability statistics use version 2 probes only.",
+              "provider": {"name": NAME, "model": MODEL, "url": URL},
+              "current": record,
+              "last_24h": stats_24h,
+              "last_7d": stats(recent_7d),
+              "all_time": stats(strict_rows),
+              "legacy_checks": len(rows) - len(strict_rows),
               "pricing": {
-                  "usd_per_million_tokens":
-                      PRICE_PER_MILLION_TOKENS,
-
+                  "usd_per_million_tokens": PRICE_PER_MILLION_TOKENS,
                   "heavy_agent": {
-                      "input_tokens":
-                          AGENT_INPUT_TOKENS,
-
-                      "output_tokens":
-                          AGENT_OUTPUT_TOKENS,
-
-                      "total_tokens":
-                          AGENT_TOTAL_TOKENS,
-
-                      "cost_usd":
-                          AGENT_COST,
-
-                      "cost_1k_turns_usd":
-                          AGENT_COST * 1000,
-
-                      "cost_10k_turns_usd":
-                          AGENT_COST * 10000,
-
-                      "cost_100k_turns_usd":
-                          AGENT_COST * 100000,
+                      "input_tokens": 100_000,
+                      "output_tokens": 20_000,
+                      "total_tokens": agent_tokens,
+                      "cost_usd": agent_cost,
+                      "cost_1k_turns_usd": agent_cost * 1000,
+                      "cost_10k_turns_usd": agent_cost * 10000,
+                      "cost_100k_turns_usd": agent_cost * 100000,
                   },
               },
-
-              "current": record,
-
-              "last_24h": stats_24h,
-              "last_7d": stats_7d,
-              "all_time": stats_all,
-
               "monitoring_cost": {
-                  "last_24h_usd":
-                      daily_cost,
-
-                  "projected_30d_usd":
-                      projected_30d,
-
-                  "last_24h_tokens":
-                      daily_tokens,
-
-                  "projected_30d_tokens":
-                      projected_30d_tokens,
+                  "last_24h_usd": stats_24h["cost_usd"],
+                  "projected_30d_usd": stats_24h["cost_usd"] * 30,
+                  "last_24h_tokens": stats_24h["total_tokens"],
+                  "projected_30d_tokens": stats_24h["total_tokens"] * 30,
               },
           }
 
+          def write_json(path, value):
+              path.write_text(
+                  json.dumps(value, indent=2, ensure_ascii=False),
+                  encoding="utf-8",
+              )
 
-          SUMMARY.write_text(
-              json.dumps(
-                  summary,
-                  indent=2,
-                  ensure_ascii=False,
-              ),
-              encoding="utf-8",
-          )
-
-
-          # Keep the dashboard payload manageable.
-          MEASUREMENTS.write_text(
-              json.dumps(
-                  {
-                      "generated_at": iso(),
-                      "measurements": rows[-10000:],
-                  },
-                  separators=(",", ":"),
-                  ensure_ascii=False,
-              ),
-              encoding="utf-8",
-          )
-
-
-          # ============================================================
-          # DASHBOARD
-          # ============================================================
+          write_json(DATA / "current.json", {
+              "project": "GonkaPulse",
+              "generated_at": iso(),
+              "provider": record,
+          })
+          write_json(DATA / "summary.json", summary)
+          write_json(DATA / "measurements.json", {
+              "generated_at": iso(),
+              "measurements": rows[-10000:],
+          })
 
           html = r'''<!doctype html>
           <html lang="en">
           <head>
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width,initial-scale=1">
-
           <title>GonkaPulse</title>
-
           <style>
-          :root{
-            color-scheme:dark;
-            --bg:#080a0f;
-            --card:#111620;
-            --card2:#0d1119;
-            --border:#252d3b;
-            --text:#f5f7fb;
-            --muted:#8d99aa;
-            --green:#3dde9d;
-            --yellow:#f1c75b;
-            --red:#ff6678;
-            --blue:#72a7ff;
-          }
-
-          *{
-            box-sizing:border-box;
-          }
-
-          body{
-            margin:0;
-            background:var(--bg);
-            color:var(--text);
-            font:14px/1.45 Inter,system-ui,sans-serif;
-          }
-
-          main{
-            width:min(1200px,calc(100% - 28px));
-            margin:auto;
-            padding:48px 0 80px;
-          }
-
-          h1{
-            font-size:clamp(42px,7vw,72px);
-            letter-spacing:-.055em;
-            margin:0;
-          }
-
-          .subtitle{
-            color:var(--muted);
-            font-size:16px;
-            margin:8px 0 28px;
-          }
-
-          .hero,
-          .card{
-            border:1px solid var(--border);
-            background:var(--card);
-            border-radius:16px;
-          }
-
-          .hero{
-            padding:28px;
-            margin-bottom:18px;
-          }
-
-          .eyebrow{
-            text-transform:uppercase;
-            letter-spacing:.12em;
-            color:var(--muted);
-            font-size:11px;
-            font-weight:800;
-          }
-
-          .status{
-            font-size:clamp(64px,12vw,110px);
-            line-height:.95;
-            font-weight:900;
-            letter-spacing:-.06em;
-            margin:12px 0;
-          }
-
-          .up{
-            color:var(--green);
-          }
-
-          .rate_limited,
-          .degraded{
-            color:var(--yellow);
-          }
-
-          .down,
-          .timeout,
-          .auth_error,
-          .missing_secret,
-          .error{
-            color:var(--red);
-          }
-
-          .grid{
-            display:grid;
-            grid-template-columns:
-              repeat(auto-fit,minmax(190px,1fr));
-            gap:12px;
-            margin:18px 0;
-          }
-
-          .card{
-            padding:18px;
-          }
-
-          .value{
-            font-size:30px;
-            font-weight:900;
-            margin-top:6px;
-          }
-
-          .money{
-            color:var(--green);
-          }
-
-          .section{
-            margin-top:28px;
-          }
-
-          .section h2{
-            font-size:22px;
-            margin-bottom:12px;
-          }
-
-          .bars{
-            display:flex;
-            height:36px;
-            gap:1px;
-            margin-top:12px;
-          }
-
-          .bar{
-            flex:1;
-            min-width:1px;
-          }
-
-          .bar.up{
-            background:var(--green);
-          }
-
-          .bar.rate_limited{
-            background:var(--yellow);
-          }
-
-          .bar.degraded{
-            background:#df9b45;
-          }
-
-          .bar.timeout,
-          .bar.down,
-          .bar.auth_error,
-          .bar.error{
-            background:var(--red);
-          }
-
-          details{
-            margin-top:14px;
-            border:1px solid var(--border);
-            border-radius:12px;
-            background:var(--card);
-          }
-
-          summary{
-            cursor:pointer;
-            padding:16px 18px;
-            font-weight:800;
-          }
-
-          .body{
-            padding:0 18px 18px;
-            overflow:auto;
-          }
-
-          table{
-            width:100%;
-            border-collapse:collapse;
-            min-width:900px;
-          }
-
-          th,
-          td{
-            text-align:left;
-            padding:9px;
-            border-bottom:1px solid #202735;
-            font-variant-numeric:tabular-nums;
-          }
-
-          th{
-            color:var(--muted);
-            font-size:11px;
-            text-transform:uppercase;
-          }
-
-          .note,
-          footer{
-            color:var(--muted);
-            font-size:12px;
-          }
-
-          footer{
-            margin-top:30px;
-          }
+          :root{color-scheme:dark;--bg:#080a0f;--card:#111620;
+            --border:#252d3b;--text:#f5f7fb;--muted:#8d99aa;
+            --green:#3dde9d;--yellow:#f1c75b;--red:#ff6678}
+          *{box-sizing:border-box}
+          body{margin:0;background:var(--bg);color:var(--text);
+            font:14px/1.45 system-ui,sans-serif}
+          main{width:min(1200px,calc(100% - 28px));margin:auto;padding:40px 0}
+          h1{font-size:52px;letter-spacing:-.05em;margin:0}
+          .muted,footer{color:var(--muted)}
+          .hero,.card,details{background:var(--card);
+            border:1px solid var(--border);border-radius:14px;padding:20px}
+          .hero{margin:24px 0}
+          .status{font-size:clamp(32px,7vw,72px);font-weight:900}
+          .up{color:var(--green)}
+          .rate_limited,.degraded{color:var(--yellow)}
+          .down,.timeout,.auth_error,.missing_secret,.transport_error,
+          .invalid_response,.model_mismatch,.error{color:var(--red)}
+          .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+            gap:12px;margin:16px 0}
+          .label{color:var(--muted);font-size:12px}
+          .value{font-size:28px;font-weight:800;margin-top:5px}
+          .errorbox{white-space:pre-wrap;overflow-wrap:anywhere}
+          .bars{display:flex;height:36px;gap:2px;margin:16px 0}
+          .bar{flex:1;min-width:1px;background:var(--red)}
+          .bar.up{background:var(--green)}
+          .bar.rate_limited,.bar.degraded{background:var(--yellow)}
+          .bar.legacy{background:#566174}
+          summary{cursor:pointer;font-weight:800}
+          .tablewrap{overflow:auto;margin-top:16px}
+          table{width:100%;border-collapse:collapse;min-width:1300px}
+          th,td{text-align:left;padding:9px;border-bottom:1px solid var(--border)}
+          th{color:var(--muted)}
+          footer{margin-top:24px;font-size:12px}
           </style>
           </head>
-
-          <body>
-          <main>
-
+          <body><main>
           <h1>GonkaPulse</h1>
-
-          <div class="subtitle">
-            GLM-5.3-Flash via Gonka Router · availability,
-            latency, token usage and actual monitoring cost.
-          </div>
-
+          <p class="muted">GLM-5.3-Flash · fallback disabled · unique response challenge</p>
           <section class="hero">
-
-            <div class="eyebrow">
-              Current status
-            </div>
-
-            <div
-              class="status"
-              id="status"
-            >
-              —
-            </div>
-
-            <div class="grid">
-
-              <div class="card">
-                <div class="eyebrow">
-                  P95 latency · 24h
-                </div>
-                <div
-                  class="value"
-                  id="p95"
-                >
-                  —
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="eyebrow">
-                  Success · 24h
-                </div>
-                <div
-                  class="value"
-                  id="success"
-                >
-                  —
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="eyebrow">
-                  Tokens · 24h
-                </div>
-                <div
-                  class="value"
-                  id="tokens"
-                >
-                  —
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="eyebrow">
-                  Monitoring cost · 24h
-                </div>
-                <div
-                  class="value money"
-                  id="cost"
-                >
-                  —
-                </div>
-              </div>
-
-            </div>
-
+            <div class="label">Current status</div>
+            <div id="status" class="status">—</div>
+            <p id="model" class="muted"></p>
+            <div id="error" class="errorbox"></div>
+            <p id="request" class="muted"></p>
           </section>
-
-
-          <section class="section">
-
-          <h2>Gonka economics</h2>
-
-          <div class="grid">
-
-            <div class="card">
-              <div class="eyebrow">
-                Price / 1M tokens
-              </div>
-              <div
-                class="value money"
-                id="price"
-              >
-                —
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="eyebrow">
-                120K-token agent turn
-              </div>
-              <div
-                class="value money"
-                id="agent"
-              >
-                —
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="eyebrow">
-                10K heavy turns
-              </div>
-              <div
-                class="value money"
-                id="turn10k"
-              >
-                —
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="eyebrow">
-                Projected monitoring · 30d
-              </div>
-              <div
-                class="value money"
-                id="monthly"
-              >
-                —
-              </div>
-            </div>
-
-          </div>
-
-          </section>
-
-
-          <section class="section">
-
-            <h2>Token usage · 24h</h2>
-
-            <div class="grid">
-
-              <div class="card">
-                <div class="eyebrow">
-                  Prompt
-                </div>
-                <div
-                  class="value"
-                  id="promptTokens"
-                >
-                  —
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="eyebrow">
-                  Completion
-                </div>
-                <div
-                  class="value"
-                  id="completionTokens"
-                >
-                  —
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="eyebrow">
-                  Reasoning
-                </div>
-                <div
-                  class="value"
-                  id="reasoningTokens"
-                >
-                  —
-                </div>
-              </div>
-
-              <div class="card">
-                <div class="eyebrow">
-                  Total
-                </div>
-                <div
-                  class="value"
-                  id="totalTokens"
-                >
-                  —
-                </div>
-              </div>
-
-            </div>
-
-          </section>
-
-
-          <section class="section">
-
-            <h2>Recent observations</h2>
-
-            <div
-              class="bars"
-              id="timeline"
-            ></div>
-
-          </section>
-
-
+          <div class="grid" id="metrics"></div>
+          <h2>Token usage · 24h</h2>
+          <div class="grid" id="usage"></div>
+          <h2>Estimated economics</h2>
+          <div class="grid" id="economics"></div>
+          <h2>API errors · 24h</h2>
+          <div id="errors" class="errorbox"></div>
+          <h2>Recent observations</h2>
+          <div id="timeline" class="bars"></div>
+          <p class="muted">Gray bars are legacy probes excluded from strict statistics.</p>
           <details>
-
-            <summary>
-              Every retained measurement
-            </summary>
-
-            <div class="body">
-
+            <summary>Retained measurements and errors</summary>
+            <div class="tablewrap">
               <table>
-
-                <thead>
-                  <tr>
-                    <th>Time</th>
-                    <th>Status</th>
-                    <th>HTTP</th>
-                    <th>Latency</th>
-                    <th>TTFB</th>
-                    <th>Prompt</th>
-                    <th>Completion</th>
-                    <th>Reasoning</th>
-                    <th>Total</th>
-                    <th>Cost</th>
-                  </tr>
-                </thead>
-
+                <thead><tr>
+                  <th>Time</th><th>Status</th><th>HTTP</th>
+                  <th>Actual model</th><th>Error code / validation</th><th>Message</th>
+                  <th>Latency</th><th>TTFB</th><th>Prompt</th>
+                  <th>Completion</th><th>Reasoning</th><th>Total</th><th>Cost</th>
+                </tr></thead>
                 <tbody id="history"></tbody>
-
               </table>
-
             </div>
-
           </details>
-
           <footer id="footer"></footer>
-
           </main>
-
-
           <script>
-
-          const e = x =>
-            String(x ?? "—")
-              .replaceAll("&","&amp;")
-              .replaceAll("<","&lt;")
-              .replaceAll(">","&gt;");
-
-          const n = x =>
-            x == null
-              ? "—"
-              : Number(x).toLocaleString(
-                  undefined,
-                  {maximumFractionDigits:3}
-                );
-
-          const usd = x =>
-            x == null
-              ? "—"
-              : "$" + Number(x).toLocaleString(
-                  undefined,
-                  {
-                    minimumFractionDigits:
-                      Number(x) < 0.01 ? 6 : 2,
-
-                    maximumFractionDigits:
-                      Number(x) < 0.01 ? 8 : 2
-                  }
-                );
-
-
-          async function load(){
-
-            const t = Date.now();
-
-            const [s,m] = await Promise.all([
-
-              fetch(
-                `data/summary.json?${t}`
-              ).then(r => r.json()),
-
-              fetch(
-                `data/measurements.json?${t}`
-              ).then(r => r.json())
-
-            ]);
-
-
-            const current = s.current || {};
-            const d = s.last_24h || {};
-            const pricing = s.pricing || {};
-            const agent = pricing.heavy_agent || {};
-            const monitoring = s.monitoring_cost || {};
-
-
-            const status =
-              document.querySelector("#status");
-
-            status.textContent =
-              String(
-                current.status || "unknown"
-              ).toUpperCase();
-
-            status.className =
-              `status ${e(current.status)}`;
-
-
-            document.querySelector(
-              "#p95"
-            ).textContent =
-              d.p95_latency_ms == null
-                ? "—"
-                : n(d.p95_latency_ms) + " ms";
-
-
-            document.querySelector(
-              "#success"
-            ).textContent =
-              d.success_pct == null
-                ? "—"
-                : n(d.success_pct) + "%";
-
-
-            document.querySelector(
-              "#tokens"
-            ).textContent =
-              n(d.total_tokens);
-
-
-            document.querySelector(
-              "#cost"
-            ).textContent =
-              usd(d.cost_usd);
-
-
-            document.querySelector(
-              "#price"
-            ).textContent =
-              usd(
-                pricing.usd_per_million_tokens
-              );
-
-
-            document.querySelector(
-              "#agent"
-            ).textContent =
-              usd(agent.cost_usd);
-
-
-            document.querySelector(
-              "#turn10k"
-            ).textContent =
-              usd(agent.cost_10k_turns_usd);
-
-
-            document.querySelector(
-              "#monthly"
-            ).textContent =
-              usd(
-                monitoring.projected_30d_usd
-              );
-
-
-            document.querySelector(
-              "#promptTokens"
-            ).textContent =
-              n(d.prompt_tokens);
-
-
-            document.querySelector(
-              "#completionTokens"
-            ).textContent =
-              n(d.completion_tokens);
-
-
-            document.querySelector(
-              "#reasoningTokens"
-            ).textContent =
-              n(d.reasoning_tokens);
-
-
-            document.querySelector(
-              "#totalTokens"
-            ).textContent =
-              n(d.total_tokens);
-
-
-            const rows =
-              m.measurements || [];
-
-
-            const recent =
-              rows.slice(-288);
-
-
-            document.querySelector(
-              "#timeline"
-            ).innerHTML =
-              recent.map(
-                r =>
-                  `<i
-                    class="bar ${e(r.status)}"
-                    title="${e(r.ts)} · ${e(r.status)} · ${n(r.latency_ms)} ms"
-                  ></i>`
-              ).join("");
-
-
-            document.querySelector(
-              "#history"
-            ).innerHTML =
-              rows
-                .slice()
-                .reverse()
-                .map(
-                  r => `
-                    <tr>
-
-                      <td>${e(r.ts)}</td>
-
-                      <td class="${e(r.status)}">
-                        ${e(r.status)}
-                      </td>
-
-                      <td>${e(r.http)}</td>
-
-                      <td>
-                        ${n(r.latency_ms)} ms
-                      </td>
-
-                      <td>
-                        ${n(r.ttfb_ms)} ms
-                      </td>
-
-                      <td>
-                        ${n(r.prompt_tokens)}
-                      </td>
-
-                      <td>
-                        ${n(r.completion_tokens)}
-                      </td>
-
-                      <td>
-                        ${n(r.reasoning_tokens)}
-                      </td>
-
-                      <td>
-                        ${n(r.total_tokens)}
-                      </td>
-
-                      <td class="money">
-                        ${usd(r.cost_usd)}
-                      </td>
-
-                    </tr>
-                  `
-                ).join("");
-
-
-            document.querySelector(
-              "#footer"
-            ).textContent =
-              "Updated "
-              + new Date(
-                  s.generated_at
-                ).toLocaleString()
-              + " · zai-org/GLM-5.3-Flash · "
-              + "$0.0023 / 1M tokens";
-
+          const escapeHtml = value => String(value ?? "—")
+            .replaceAll("&","&amp;").replaceAll("<","&lt;")
+            .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+            .replaceAll("'","&#39;");
+          const number = value => value == null ? "—" :
+            Number(value).toLocaleString(undefined,{maximumFractionDigits:3});
+          const money = value => value == null ? "—" :
+            "$" + Number(value).toLocaleString(undefined,{
+              minimumFractionDigits:6,maximumFractionDigits:8});
+          const ms = value => value == null ? "—" : number(value) + " ms";
+          const classes = new Set([
+            "up","down","timeout","rate_limited","degraded","auth_error",
+            "missing_secret","transport_error","invalid_response","model_mismatch"
+          ]);
+          const statusClass = value => classes.has(value) ? value : "error";
+          function cards(id, values) {
+            document.getElementById(id).innerHTML = values.map(([label,value]) =>
+              `<div class="card"><div class="label">${escapeHtml(label)}</div>
+              <div class="value">${escapeHtml(value)}</div></div>`).join("");
           }
+          async function fetchJson(url) {
+            const response = await fetch(url,{cache:"no-store"});
+            if (!response.ok) throw new Error(`Dashboard fetch failed: ${response.status}`);
+            return response.json();
+          }
+          async function load() {
+            try {
+              const t = Date.now();
+              const [s,m] = await Promise.all([
+                fetchJson(`data/summary.json?${t}`),
+                fetchJson(`data/measurements.json?${t}`)
+              ]);
+              const c = s.current || {};
+              const d = s.last_24h || {};
+              const pricing = s.pricing || {};
+              const agent = pricing.heavy_agent || {};
+              const monitoring = s.monitoring_cost || {};
+              const status = document.getElementById("status");
+              status.textContent = String(c.status || "unknown").toUpperCase();
+              status.className = `status ${statusClass(c.status)}`;
+              document.getElementById("model").textContent =
+                `Requested: ${c.requested_model || "—"} · Actual: ${c.actual_model || "—"}`;
+              document.getElementById("error").textContent = [
+                c.error_code && `Error: ${c.error_code}`,
+                c.error_message,
+                c.validation_error && `Validation: ${c.validation_error}`
+              ].filter(Boolean).join("\n") || "No API or validation error.";
+              document.getElementById("request").textContent =
+                `HTTP: ${c.http ?? "—"} · Request: ${c.request_id || "—"}`;
 
+              cards("metrics", [
+                ["Success · 24h",d.success_pct == null ? "—" : number(d.success_pct)+"%"],
+                ["Failed checks · 24h",number(d.failure_checks)],
+                ["Upstream saturated · 24h",number(d.upstream_saturated_checks)],
+                ["P95 latency · 24h",ms(d.p95_latency_ms)],
+                ["Checks · 24h",number(d.checks)],
+                ["Estimated monitoring cost · 24h",money(d.cost_usd)]
+              ]);
+              cards("usage",[
+                ["Prompt",number(d.prompt_tokens)],
+                ["Completion",number(d.completion_tokens)],
+                ["Reasoning",number(d.reasoning_tokens)],
+                ["Total",number(d.total_tokens)]
+              ]);
+              cards("economics",[
+                ["Configured price / 1M tokens",money(pricing.usd_per_million_tokens)],
+                ["120K-token agent turn",money(agent.cost_usd)],
+                ["10K heavy turns",money(agent.cost_10k_turns_usd)],
+                ["Projected monitoring · 30d",money(monitoring.projected_30d_usd)]
+              ]);
+              document.getElementById("errors").textContent =
+                Object.entries(d.error_counts || {})
+                  .map(([code,count]) => `${code}: ${count}`).join("\n")
+                || "No recorded API or validation errors.";
 
+              const rows = m.measurements || [];
+              document.getElementById("timeline").innerHTML =
+                rows.slice(-288).map(r =>
+                  `<i class="bar ${r.probe_version === 2 ? statusClass(r.status) : "legacy"}"
+                  title="${escapeHtml(r.ts)} · ${escapeHtml(r.status)} ·
+                  ${escapeHtml(r.error_code || "")}"></i>`).join("");
+              document.getElementById("history").innerHTML =
+                rows.slice().reverse().map(r => `<tr>
+                  <td>${escapeHtml(r.ts)}</td>
+                  <td class="${statusClass(r.status)}">${escapeHtml(r.status)}
+                    ${r.probe_version === 2 ? "" : " (legacy)"}</td>
+                  <td>${escapeHtml(r.http)}</td>
+                  <td>${escapeHtml(r.actual_model)}</td>
+                  <td>${escapeHtml(r.error_code || r.validation_error)}</td>
+                  <td>${escapeHtml(r.error_message)}</td>
+                  <td>${ms(r.latency_ms)}</td><td>${ms(r.ttfb_ms)}</td>
+                  <td>${number(r.prompt_tokens)}</td>
+                  <td>${number(r.completion_tokens)}</td>
+                  <td>${number(r.reasoning_tokens)}</td>
+                  <td>${number(r.total_tokens)}</td>
+                  <td>${money(r.cost_usd)}</td>
+                </tr>`).join("");
+              document.getElementById("footer").textContent =
+                `Updated ${new Date(s.generated_at).toLocaleString()} · ` +
+                `${s.statistics_note} Cost estimates use reported tokens and configured pricing.`;
+            } catch (error) {
+              const status = document.getElementById("status");
+              status.textContent = "DASHBOARD ERROR";
+              status.className = "status error";
+              document.getElementById("error").textContent = String(error);
+            }
+          }
           load();
-
-          setInterval(
-            load,
-            60000
-          );
-
+          setInterval(load,60000);
           </script>
-
-          </body>
-          </html>
+          </body></html>
           '''
-
-
-          (ROOT / "index.html").write_text(
-              html,
-              encoding="utf-8",
-          )
-
+          (ROOT / "index.html").write_text(html, encoding="utf-8")
           PY
 
-          python /tmp/gonkapulse.py
+          python3 /tmp/gonkapulse.py
 
       - name: Commit pulse data
         shell: bash
@@ -1566,21 +697,24 @@ jobs:
           else
             git commit -m "pulse: ${{ github.run_id }}"
 
+            pushed=false
             for attempt in 1 2 3; do
               if git push origin HEAD:main; then
+                pushed=true
                 break
               fi
 
-              echo "Push failed; rebasing and retrying..."
-
-              git pull --rebase origin main
-              sleep 2
-
-              if [ "$attempt" = "3" ]; then
-                echo "Could not push after retries."
-                exit 1
+              if [ "$attempt" -lt 3 ]; then
+                echo "Push failed; rebasing and retrying..."
+                git pull --rebase origin main
+                sleep 2
               fi
             done
+
+            if [ "$pushed" != true ]; then
+              echo "Could not push after retries."
+              exit 1
+            fi
           fi
 
       - name: Configure Pages
