@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-06T20:27:08.874424Z",
+  "generated_at": "2026-10-06T20:45:13.723549Z",
   "measurements": [
     {
       "ts": "2026-10-05T12:04:04.106733Z",
@@ -2631,6 +2631,42 @@
       "rate_limit_limit": 200,
       "rate_limit_remaining": 193,
       "rate_limit_reset": "15s"
+    },
+    {
+      "ts": "2026-10-06T20:45:12.031552Z",
+      "provider": "gonkarouter",
+      "name": "Gonka Router",
+      "requested_model": "zai-org/GLM-5.3-Flash",
+      "probe_version": 2,
+      "fallback_disabled": true,
+      "status": "down",
+      "http": 429,
+      "actual_model": null,
+      "model_verified": false,
+      "validation_error": null,
+      "error_code": "upstream_saturated",
+      "error_type": "upstream_error",
+      "error_message": "Upstream capacity is currently saturated. Please retry shortly, or switch to another model.",
+      "curl_exit": 0,
+      "fallback": null,
+      "request_id": null,
+      "completion_id": null,
+      "completion_created": null,
+      "system_fingerprint": null,
+      "latency_ms": 1678,
+      "dns_ms": 186,
+      "connect_ms": 194,
+      "tls_ms": 216,
+      "ttfb_ms": 1678,
+      "prompt_tokens": null,
+      "completion_tokens": null,
+      "reasoning_tokens": null,
+      "total_tokens": null,
+      "cost_usd": null,
+      "retry_after": null,
+      "rate_limit_limit": 200,
+      "rate_limit_remaining": 198,
+      "rate_limit_reset": "26s"
     }
   ]
 }
