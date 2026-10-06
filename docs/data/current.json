@@ -1,8 +1,8 @@
 {
   "project": "GonkaPulse",
-  "generated_at": "2026-10-06T20:57:58.911069Z",
+  "generated_at": "2026-10-06T21:15:31.828728Z",
   "provider": {
-    "ts": "2026-10-06T20:57:57.836361Z",
+    "ts": "2026-10-06T21:15:31.115737Z",
     "provider": "gonkarouter",
     "name": "Gonka Router",
     "requested_model": "zai-org/GLM-5.3-Flash",
@@ -22,11 +22,11 @@
     "completion_id": null,
     "completion_created": null,
     "system_fingerprint": null,
-    "latency_ms": 1018,
-    "dns_ms": 33,
-    "connect_ms": 38,
-    "tls_ms": 53,
-    "ttfb_ms": 1018,
+    "latency_ms": 698,
+    "dns_ms": 49,
+    "connect_ms": 51,
+    "tls_ms": 73,
+    "ttfb_ms": 698,
     "prompt_tokens": null,
     "completion_tokens": null,
     "reasoning_tokens": null,
@@ -34,7 +34,7 @@
     "cost_usd": null,
     "retry_after": null,
     "rate_limit_limit": 200,
-    "rate_limit_remaining": 199,
-    "rate_limit_reset": "60s"
+    "rate_limit_remaining": 198,
+    "rate_limit_reset": "54s"
   }
 }

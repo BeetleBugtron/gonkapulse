@@ -1,6 +1,6 @@
 {
   "project": "GonkaPulse",
-  "generated_at": "2026-10-06T20:57:58.911040Z",
+  "generated_at": "2026-10-06T21:15:31.828675Z",
   "probe_version": 2,
   "statistics_note": "Availability statistics use version 2 probes only.",
   "provider": {
@@ -9,7 +9,7 @@
     "url": "https://api.gonkarouter.io/v1/chat/completions"
   },
   "current": {
-    "ts": "2026-10-06T20:57:57.836361Z",
+    "ts": "2026-10-06T21:15:31.115737Z",
     "provider": "gonkarouter",
     "name": "Gonka Router",
     "requested_model": "zai-org/GLM-5.3-Flash",
@@ -29,11 +29,11 @@
     "completion_id": null,
     "completion_created": null,
     "system_fingerprint": null,
-    "latency_ms": 1018,
-    "dns_ms": 33,
-    "connect_ms": 38,
-    "tls_ms": 53,
-    "ttfb_ms": 1018,
+    "latency_ms": 698,
+    "dns_ms": 49,
+    "connect_ms": 51,
+    "tls_ms": 73,
+    "ttfb_ms": 698,
     "prompt_tokens": null,
     "completion_tokens": null,
     "reasoning_tokens": null,
@@ -41,24 +41,24 @@
     "cost_usd": null,
     "retry_after": null,
     "rate_limit_limit": 200,
-    "rate_limit_remaining": 199,
-    "rate_limit_reset": "60s"
+    "rate_limit_remaining": 198,
+    "rate_limit_reset": "54s"
   },
   "last_24h": {
-    "checks": 4,
+    "checks": 5,
     "successful_checks": 0,
     "success_pct": 0.0,
-    "failure_checks": 4,
+    "failure_checks": 5,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 0,
     "timeout_pct": 0.0,
-    "upstream_saturated_checks": 4,
+    "upstream_saturated_checks": 5,
     "status_counts": {
-      "down": 4
+      "down": 5
     },
     "error_counts": {
-      "upstream_saturated": 4
+      "upstream_saturated": 5
     },
     "p50_latency_ms": null,
     "p95_latency_ms": null,
@@ -72,20 +72,20 @@
     "cost_usd": 0
   },
   "last_7d": {
-    "checks": 4,
+    "checks": 5,
     "successful_checks": 0,
     "success_pct": 0.0,
-    "failure_checks": 4,
+    "failure_checks": 5,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 0,
     "timeout_pct": 0.0,
-    "upstream_saturated_checks": 4,
+    "upstream_saturated_checks": 5,
     "status_counts": {
-      "down": 4
+      "down": 5
     },
     "error_counts": {
-      "upstream_saturated": 4
+      "upstream_saturated": 5
     },
     "p50_latency_ms": null,
     "p95_latency_ms": null,
@@ -99,20 +99,20 @@
     "cost_usd": 0
   },
   "all_time": {
-    "checks": 4,
+    "checks": 5,
     "successful_checks": 0,
     "success_pct": 0.0,
-    "failure_checks": 4,
+    "failure_checks": 5,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 0,
     "timeout_pct": 0.0,
-    "upstream_saturated_checks": 4,
+    "upstream_saturated_checks": 5,
     "status_counts": {
-      "down": 4
+      "down": 5
     },
     "error_counts": {
-      "upstream_saturated": 4
+      "upstream_saturated": 5
     },
     "p50_latency_ms": null,
     "p95_latency_ms": null,
