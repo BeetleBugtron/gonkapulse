@@ -1,6 +1,6 @@
 {
   "project": "GonkaPulse",
-  "generated_at": "2026-10-12T20:54:31.870157Z",
+  "generated_at": "2026-10-12T21:09:11.469351Z",
   "probe_version": 2,
   "statistics_note": "Availability statistics use version 2 probes only.",
   "provider": {
@@ -9,7 +9,7 @@
     "url": "https://api.gonkarouter.io/v1/chat/completions"
   },
   "current": {
-    "ts": "2026-10-12T20:54:30.121129Z",
+    "ts": "2026-10-12T21:09:10.305309Z",
     "provider": "gonkarouter",
     "name": "Gonka Router",
     "requested_model": "zai-org/GLM-5.3-Flash",
@@ -29,11 +29,11 @@
     "completion_id": null,
     "completion_created": null,
     "system_fingerprint": null,
-    "latency_ms": 1731,
-    "dns_ms": 165,
-    "connect_ms": 222,
-    "tls_ms": 289,
-    "ttfb_ms": 1731,
+    "latency_ms": 1151,
+    "dns_ms": 158,
+    "connect_ms": 168,
+    "tls_ms": 189,
+    "ttfb_ms": 1151,
     "prompt_tokens": null,
     "completion_tokens": null,
     "reasoning_tokens": null,
@@ -55,8 +55,8 @@
     "timeout_pct": 0.0,
     "upstream_saturated_checks": 17,
     "status_counts": {
-      "down": 17,
       "up": 50,
+      "down": 17,
       "invalid_response": 1
     },
     "error_counts": {
@@ -75,23 +75,23 @@
     "cost_usd": 1.88761e-05
   },
   "last_7d": {
-    "checks": 470,
+    "checks": 471,
     "successful_checks": 383,
-    "success_pct": 81.489,
-    "failure_checks": 87,
+    "success_pct": 81.316,
+    "failure_checks": 88,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 15,
-    "timeout_pct": 3.191,
-    "upstream_saturated_checks": 53,
+    "timeout_pct": 3.185,
+    "upstream_saturated_checks": 54,
     "status_counts": {
-      "down": 66,
+      "down": 67,
       "timeout": 15,
       "up": 383,
       "invalid_response": 6
     },
     "error_counts": {
-      "upstream_saturated": 53,
+      "upstream_saturated": 54,
       "curl_timeout": 15,
       "service_unavailable": 10,
       "incomplete_completion": 3,
@@ -109,23 +109,23 @@
     "cost_usd": 0.0001442537
   },
   "all_time": {
-    "checks": 470,
+    "checks": 471,
     "successful_checks": 383,
-    "success_pct": 81.489,
-    "failure_checks": 87,
+    "success_pct": 81.316,
+    "failure_checks": 88,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 15,
-    "timeout_pct": 3.191,
-    "upstream_saturated_checks": 53,
+    "timeout_pct": 3.185,
+    "upstream_saturated_checks": 54,
     "status_counts": {
-      "down": 66,
+      "down": 67,
       "timeout": 15,
       "up": 383,
       "invalid_response": 6
     },
     "error_counts": {
-      "upstream_saturated": 53,
+      "upstream_saturated": 54,
       "curl_timeout": 15,
       "service_unavailable": 10,
       "incomplete_completion": 3,
