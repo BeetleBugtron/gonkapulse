@@ -1,6 +1,6 @@
 {
   "project": "GonkaPulse",
-  "generated_at": "2026-10-12T10:51:32.248968Z",
+  "generated_at": "2026-10-12T11:07:04.860293Z",
   "probe_version": 2,
   "statistics_note": "Availability statistics use version 2 probes only.",
   "provider": {
@@ -9,7 +9,7 @@
     "url": "https://api.gonkarouter.io/v1/chat/completions"
   },
   "current": {
-    "ts": "2026-10-12T10:51:31.329074Z",
+    "ts": "2026-10-12T11:07:03.168964Z",
     "provider": "gonkarouter",
     "name": "Gonka Router",
     "requested_model": "zai-org/GLM-5.3-Flash",
@@ -29,11 +29,11 @@
     "completion_id": null,
     "completion_created": null,
     "system_fingerprint": null,
-    "latency_ms": 905,
-    "dns_ms": 21,
-    "connect_ms": 103,
-    "tls_ms": 129,
-    "ttfb_ms": 904,
+    "latency_ms": 1671,
+    "dns_ms": 162,
+    "connect_ms": 181,
+    "tls_ms": 213,
+    "ttfb_ms": 1671,
     "prompt_tokens": null,
     "completion_tokens": null,
     "reasoning_tokens": null,
@@ -46,54 +46,54 @@
   },
   "last_24h": {
     "checks": 77,
-    "successful_checks": 58,
-    "success_pct": 75.325,
-    "failure_checks": 19,
+    "successful_checks": 57,
+    "success_pct": 74.026,
+    "failure_checks": 20,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 5,
     "timeout_pct": 6.494,
-    "upstream_saturated_checks": 13,
+    "upstream_saturated_checks": 14,
     "status_counts": {
-      "up": 58,
-      "down": 13,
+      "up": 57,
+      "down": 14,
       "timeout": 5,
       "invalid_response": 1
     },
     "error_counts": {
-      "upstream_saturated": 13,
+      "upstream_saturated": 14,
       "curl_timeout": 5,
       "incomplete_completion": 1
     },
-    "p50_latency_ms": 5841,
+    "p50_latency_ms": 5977,
     "p95_latency_ms": 26651,
     "p99_latency_ms": 29266,
-    "p50_ttfb_ms": 5841,
+    "p50_ttfb_ms": 5976,
     "p95_ttfb_ms": 26651,
-    "prompt_tokens": 1784,
-    "completion_tokens": 7648,
+    "prompt_tokens": 1754,
+    "completion_tokens": 7551,
     "reasoning_tokens": 520,
-    "total_tokens": 9432,
-    "cost_usd": 2.16936e-05
+    "total_tokens": 9305,
+    "cost_usd": 2.1401499999999998e-05
   },
   "last_7d": {
-    "checks": 443,
+    "checks": 444,
     "successful_checks": 363,
-    "success_pct": 81.941,
-    "failure_checks": 80,
+    "success_pct": 81.757,
+    "failure_checks": 81,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 15,
-    "timeout_pct": 3.386,
-    "upstream_saturated_checks": 46,
+    "timeout_pct": 3.378,
+    "upstream_saturated_checks": 47,
     "status_counts": {
-      "down": 59,
+      "down": 60,
       "timeout": 15,
       "up": 363,
       "invalid_response": 6
     },
     "error_counts": {
-      "upstream_saturated": 46,
+      "upstream_saturated": 47,
       "curl_timeout": 15,
       "service_unavailable": 10,
       "incomplete_completion": 3,
@@ -111,23 +111,23 @@
     "cost_usd": 0.0001369443
   },
   "all_time": {
-    "checks": 443,
+    "checks": 444,
     "successful_checks": 363,
-    "success_pct": 81.941,
-    "failure_checks": 80,
+    "success_pct": 81.757,
+    "failure_checks": 81,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 15,
-    "timeout_pct": 3.386,
-    "upstream_saturated_checks": 46,
+    "timeout_pct": 3.378,
+    "upstream_saturated_checks": 47,
     "status_counts": {
-      "down": 59,
+      "down": 60,
       "timeout": 15,
       "up": 363,
       "invalid_response": 6
     },
     "error_counts": {
-      "upstream_saturated": 46,
+      "upstream_saturated": 47,
       "curl_timeout": 15,
       "service_unavailable": 10,
       "incomplete_completion": 3,
@@ -158,9 +158,9 @@
     }
   },
   "monitoring_cost": {
-    "last_24h_usd": 2.16936e-05,
-    "projected_30d_usd": 0.0006508079999999999,
-    "last_24h_tokens": 9432,
-    "projected_30d_tokens": 282960
+    "last_24h_usd": 2.1401499999999998e-05,
+    "projected_30d_usd": 0.0006420449999999999,
+    "last_24h_tokens": 9305,
+    "projected_30d_tokens": 279150
   }
 }
