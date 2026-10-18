@@ -1,6 +1,6 @@
 {
   "project": "GonkaPulse",
-  "generated_at": "2026-10-17T23:54:27.375933Z",
+  "generated_at": "2026-10-18T00:17:59.414082Z",
   "probe_version": 2,
   "statistics_note": "Availability statistics use version 2 probes only.",
   "provider": {
@@ -9,7 +9,7 @@
     "url": "https://api.gonkarouter.io/v1/chat/completions"
   },
   "current": {
-    "ts": "2026-10-17T23:54:21.211520Z",
+    "ts": "2026-10-18T00:17:55.974976Z",
     "provider": "gonkarouter",
     "name": "Gonka Router",
     "requested_model": "zai-org/GLM-5.3-Flash",
@@ -25,29 +25,29 @@
     "error_message": null,
     "curl_exit": 0,
     "fallback": null,
-    "request_id": "req-1792281262225157111-1175687",
-    "completion_id": "devshard-128929-624",
-    "completion_created": 1792281262,
-    "system_fingerprint": "vllm-0.30.0-pp2-2edb28b7",
-    "latency_ms": 6147,
-    "dns_ms": 217,
-    "connect_ms": 236,
-    "tls_ms": 254,
-    "ttfb_ms": 6147,
-    "prompt_tokens": 32,
-    "completion_tokens": 87,
-    "reasoning_tokens": 71,
-    "total_tokens": 119,
-    "cost_usd": 2.737e-07,
+    "request_id": "req-1792282676618413508-1183293",
+    "completion_id": "devshard-128950-27",
+    "completion_created": 1792282677,
+    "system_fingerprint": "vllm-0.28.0.dev0+glm53.gonka.sampler1-tp2-262dc8e8",
+    "latency_ms": 3419,
+    "dns_ms": 29,
+    "connect_ms": 38,
+    "tls_ms": 59,
+    "ttfb_ms": 3419,
+    "prompt_tokens": 31,
+    "completion_tokens": 80,
+    "reasoning_tokens": null,
+    "total_tokens": 111,
+    "cost_usd": 2.553e-07,
     "retry_after": null,
     "rate_limit_limit": 200,
     "rate_limit_remaining": 199,
     "rate_limit_reset": "60s"
   },
   "last_24h": {
-    "checks": 55,
-    "successful_checks": 49,
-    "success_pct": 89.091,
+    "checks": 56,
+    "successful_checks": 50,
+    "success_pct": 89.286,
     "failure_checks": 6,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
@@ -55,22 +55,22 @@
     "timeout_pct": 0.0,
     "upstream_saturated_checks": 0,
     "status_counts": {
-      "up": 49,
+      "up": 50,
       "down": 6
     },
     "error_counts": {
       "service_unavailable": 6
     },
-    "p50_latency_ms": 6147,
+    "p50_latency_ms": 6101,
     "p95_latency_ms": 12970,
     "p99_latency_ms": 16974,
-    "p50_ttfb_ms": 6147,
+    "p50_ttfb_ms": 6101,
     "p95_ttfb_ms": 12970,
-    "prompt_tokens": 1486,
-    "completion_tokens": 5792,
+    "prompt_tokens": 1517,
+    "completion_tokens": 5872,
     "reasoning_tokens": 1216,
-    "total_tokens": 7278,
-    "cost_usd": 1.67394e-05
+    "total_tokens": 7389,
+    "cost_usd": 1.69947e-05
   },
   "last_7d": {
     "checks": 403,
@@ -100,26 +100,26 @@
     "p99_latency_ms": 28566,
     "p50_ttfb_ms": 5700,
     "p95_ttfb_ms": 14991,
-    "prompt_tokens": 10554,
-    "completion_tokens": 45099,
+    "prompt_tokens": 10556,
+    "completion_tokens": 45071,
     "reasoning_tokens": 4460,
-    "total_tokens": 55653,
-    "cost_usd": 0.0001280019
+    "total_tokens": 55627,
+    "cost_usd": 0.0001279421
   },
   "all_time": {
-    "checks": 732,
-    "successful_checks": 609,
-    "success_pct": 83.197,
+    "checks": 733,
+    "successful_checks": 610,
+    "success_pct": 83.22,
     "failure_checks": 123,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 18,
-    "timeout_pct": 2.459,
+    "timeout_pct": 2.456,
     "upstream_saturated_checks": 71,
     "status_counts": {
       "down": 93,
       "timeout": 18,
-      "up": 609,
+      "up": 610,
       "invalid_response": 12
     },
     "error_counts": {
@@ -129,16 +129,16 @@
       "incomplete_completion": 9,
       "unexpected_content": 3
     },
-    "p50_latency_ms": 5760,
+    "p50_latency_ms": 5759,
     "p95_latency_ms": 16650,
     "p99_latency_ms": 26651,
-    "p50_ttfb_ms": 5760,
+    "p50_ttfb_ms": 5759,
     "p95_ttfb_ms": 16650,
-    "prompt_tokens": 18912,
-    "completion_tokens": 81275,
+    "prompt_tokens": 18943,
+    "completion_tokens": 81355,
     "reasoning_tokens": 18565,
-    "total_tokens": 100187,
-    "cost_usd": 0.0002304301
+    "total_tokens": 100298,
+    "cost_usd": 0.0002306854
   },
   "legacy_checks": 103,
   "pricing": {
@@ -154,9 +154,9 @@
     }
   },
   "monitoring_cost": {
-    "last_24h_usd": 1.67394e-05,
-    "projected_30d_usd": 0.000502182,
-    "last_24h_tokens": 7278,
-    "projected_30d_tokens": 218340
+    "last_24h_usd": 1.69947e-05,
+    "projected_30d_usd": 0.0005098409999999999,
+    "last_24h_tokens": 7389,
+    "projected_30d_tokens": 221670
   }
 }
