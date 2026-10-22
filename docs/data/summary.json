@@ -1,6 +1,6 @@
 {
   "project": "GonkaPulse",
-  "generated_at": "2026-10-22T09:38:45.686974Z",
+  "generated_at": "2026-10-22T10:16:07.027382Z",
   "probe_version": 2,
   "statistics_note": "Availability statistics use version 2 probes only.",
   "provider": {
@@ -9,7 +9,7 @@
     "url": "https://api.gonkarouter.io/v1/chat/completions"
   },
   "current": {
-    "ts": "2026-10-22T09:38:36.090945Z",
+    "ts": "2026-10-22T10:16:04.862137Z",
     "provider": "gonkarouter",
     "name": "Gonka Router",
     "requested_model": "zai-org/GLM-5.3-Flash",
@@ -25,20 +25,20 @@
     "error_message": null,
     "curl_exit": 0,
     "fallback": null,
-    "request_id": "req-1792661916411853826-5793924",
-    "completion_id": "devshard-135171-680",
-    "completion_created": 1792661916,
+    "request_id": "req-1792664165110283225-5828057",
+    "completion_id": "devshard-135179-468",
+    "completion_created": 1792664165,
     "system_fingerprint": "vllm-0.28.0.dev0+glm53.gonka.sampler1-tp2-262dc8e8",
-    "latency_ms": 9580,
-    "dns_ms": 178,
-    "connect_ms": 191,
-    "tls_ms": 205,
-    "ttfb_ms": 9580,
-    "prompt_tokens": 31,
-    "completion_tokens": 223,
+    "latency_ms": 2140,
+    "dns_ms": 49,
+    "connect_ms": 67,
+    "tls_ms": 91,
+    "ttfb_ms": 2140,
+    "prompt_tokens": 30,
+    "completion_tokens": 78,
     "reasoning_tokens": null,
-    "total_tokens": 254,
-    "cost_usd": 5.842e-07,
+    "total_tokens": 108,
+    "cost_usd": 2.484e-07,
     "retry_after": null,
     "rate_limit_limit": 200,
     "rate_limit_remaining": 199,
@@ -67,11 +67,11 @@
     "p99_latency_ms": 11054,
     "p50_ttfb_ms": 5036,
     "p95_ttfb_ms": 9580,
-    "prompt_tokens": 1070,
-    "completion_tokens": 4268,
+    "prompt_tokens": 1069,
+    "completion_tokens": 4229,
     "reasoning_tokens": 99,
-    "total_tokens": 5338,
-    "cost_usd": 1.22774e-05
+    "total_tokens": 5298,
+    "cost_usd": 1.21854e-05
   },
   "last_7d": {
     "checks": 324,
@@ -95,31 +95,31 @@
       "service_unavailable": 19,
       "curl_timeout": 2
     },
-    "p50_latency_ms": 5573,
-    "p95_latency_ms": 13809,
+    "p50_latency_ms": 5571,
+    "p95_latency_ms": 13629,
     "p99_latency_ms": 19665,
-    "p50_ttfb_ms": 5573,
-    "p95_ttfb_ms": 13809,
-    "prompt_tokens": 8547,
-    "completion_tokens": 35340,
+    "p50_ttfb_ms": 5571,
+    "p95_ttfb_ms": 13629,
+    "prompt_tokens": 8546,
+    "completion_tokens": 35269,
     "reasoning_tokens": 2450,
-    "total_tokens": 43887,
-    "cost_usd": 0.0001009401
+    "total_tokens": 43815,
+    "cost_usd": 0.0001007745
   },
   "all_time": {
-    "checks": 928,
-    "successful_checks": 773,
-    "success_pct": 83.297,
+    "checks": 929,
+    "successful_checks": 774,
+    "success_pct": 83.315,
     "failure_checks": 155,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 19,
-    "timeout_pct": 2.047,
+    "timeout_pct": 2.045,
     "upstream_saturated_checks": 91,
     "status_counts": {
       "down": 123,
       "timeout": 19,
-      "up": 773,
+      "up": 774,
       "invalid_response": 13
     },
     "error_counts": {
@@ -129,16 +129,16 @@
       "incomplete_completion": 10,
       "unexpected_content": 3
     },
-    "p50_latency_ms": 5580,
+    "p50_latency_ms": 5573,
     "p95_latency_ms": 15067,
     "p99_latency_ms": 23188,
-    "p50_ttfb_ms": 5580,
+    "p50_ttfb_ms": 5573,
     "p95_ttfb_ms": 15066,
-    "prompt_tokens": 23941,
-    "completion_tokens": 102141,
+    "prompt_tokens": 23971,
+    "completion_tokens": 102219,
     "reasoning_tokens": 19544,
-    "total_tokens": 126082,
-    "cost_usd": 0.0002899886
+    "total_tokens": 126190,
+    "cost_usd": 0.000290237
   },
   "legacy_checks": 103,
   "pricing": {
@@ -154,9 +154,9 @@
     }
   },
   "monitoring_cost": {
-    "last_24h_usd": 1.22774e-05,
-    "projected_30d_usd": 0.00036832200000000003,
-    "last_24h_tokens": 5338,
-    "projected_30d_tokens": 160140
+    "last_24h_usd": 1.21854e-05,
+    "projected_30d_usd": 0.000365562,
+    "last_24h_tokens": 5298,
+    "projected_30d_tokens": 158940
   }
 }
