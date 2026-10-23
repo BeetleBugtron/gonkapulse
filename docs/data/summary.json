@@ -1,6 +1,6 @@
 {
   "project": "GonkaPulse",
-  "generated_at": "2026-10-23T04:54:05.850446Z",
+  "generated_at": "2026-10-23T05:21:22.815912Z",
   "probe_version": 2,
   "statistics_note": "Availability statistics use version 2 probes only.",
   "provider": {
@@ -9,7 +9,7 @@
     "url": "https://api.gonkarouter.io/v1/chat/completions"
   },
   "current": {
-    "ts": "2026-10-23T04:54:02.340485Z",
+    "ts": "2026-10-23T05:21:15.207913Z",
     "provider": "gonkarouter",
     "name": "Gonka Router",
     "requested_model": "zai-org/GLM-5.3-Flash",
@@ -25,20 +25,20 @@
     "error_message": null,
     "curl_exit": 0,
     "fallback": null,
-    "request_id": "req-1792731242530018662-6672687",
-    "completion_id": "devshard-136044-652",
-    "completion_created": 1792731242,
+    "request_id": "req-1792732875509737001-6693114",
+    "completion_id": "devshard-136050-417",
+    "completion_created": 1792732875,
     "system_fingerprint": "vllm-0.28.0.dev0+glm53.gonka.sampler1-tp2-262dc8e8",
-    "latency_ms": 3490,
-    "dns_ms": 48,
-    "connect_ms": 57,
-    "tls_ms": 75,
-    "ttfb_ms": 3489,
-    "prompt_tokens": 30,
-    "completion_tokens": 99,
+    "latency_ms": 7591,
+    "dns_ms": 139,
+    "connect_ms": 153,
+    "tls_ms": 172,
+    "ttfb_ms": 7591,
+    "prompt_tokens": 27,
+    "completion_tokens": 137,
     "reasoning_tokens": null,
-    "total_tokens": 129,
-    "cost_usd": 2.9669999999999995e-07,
+    "total_tokens": 164,
+    "cost_usd": 3.772e-07,
     "retry_after": null,
     "rate_limit_limit": 200,
     "rate_limit_remaining": 199,
@@ -62,16 +62,16 @@
       "upstream_saturated": 2,
       "service_unavailable": 2
     },
-    "p50_latency_ms": 5183,
+    "p50_latency_ms": 5274,
     "p95_latency_ms": 10585,
     "p99_latency_ms": 14683,
-    "p50_ttfb_ms": 5182,
+    "p50_ttfb_ms": 5274,
     "p95_ttfb_ms": 10585,
-    "prompt_tokens": 1167,
-    "completion_tokens": 4955,
-    "reasoning_tokens": 328,
-    "total_tokens": 6122,
-    "cost_usd": 1.40806e-05
+    "prompt_tokens": 1163,
+    "completion_tokens": 4978,
+    "reasoning_tokens": 229,
+    "total_tokens": 6141,
+    "cost_usd": 1.41243e-05
   },
   "last_7d": {
     "checks": 322,
@@ -95,31 +95,31 @@
       "curl_timeout": 2,
       "upstream_saturated": 21
     },
-    "p50_latency_ms": 5571,
+    "p50_latency_ms": 5573,
     "p95_latency_ms": 12716,
     "p99_latency_ms": 15972,
-    "p50_ttfb_ms": 5571,
+    "p50_ttfb_ms": 5573,
     "p95_ttfb_ms": 12716,
-    "prompt_tokens": 8494,
-    "completion_tokens": 35162,
+    "prompt_tokens": 8489,
+    "completion_tokens": 35196,
     "reasoning_tokens": 2679,
-    "total_tokens": 43656,
-    "cost_usd": 0.00010040879999999999
+    "total_tokens": 43685,
+    "cost_usd": 0.0001004755
   },
   "all_time": {
-    "checks": 962,
-    "successful_checks": 804,
-    "success_pct": 83.576,
+    "checks": 963,
+    "successful_checks": 805,
+    "success_pct": 83.593,
     "failure_checks": 158,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 19,
-    "timeout_pct": 1.975,
+    "timeout_pct": 1.973,
     "upstream_saturated_checks": 92,
     "status_counts": {
       "down": 126,
       "timeout": 19,
-      "up": 804,
+      "up": 805,
       "invalid_response": 13
     },
     "error_counts": {
@@ -134,11 +134,11 @@
     "p99_latency_ms": 23188,
     "p50_ttfb_ms": 5580,
     "p95_ttfb_ms": 14991,
-    "prompt_tokens": 24893,
-    "completion_tokens": 106242,
+    "prompt_tokens": 24920,
+    "completion_tokens": 106379,
     "reasoning_tokens": 19773,
-    "total_tokens": 131135,
-    "cost_usd": 0.0003016105
+    "total_tokens": 131299,
+    "cost_usd": 0.0003019877
   },
   "legacy_checks": 103,
   "pricing": {
@@ -154,9 +154,9 @@
     }
   },
   "monitoring_cost": {
-    "last_24h_usd": 1.40806e-05,
-    "projected_30d_usd": 0.00042241800000000003,
-    "last_24h_tokens": 6122,
-    "projected_30d_tokens": 183660
+    "last_24h_usd": 1.41243e-05,
+    "projected_30d_usd": 0.00042372899999999997,
+    "last_24h_tokens": 6141,
+    "projected_30d_tokens": 184230
   }
 }
