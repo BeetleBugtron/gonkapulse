@@ -1,6 +1,6 @@
 {
   "project": "GonkaPulse",
-  "generated_at": "2026-10-24T12:06:07.867827Z",
+  "generated_at": "2026-10-24T12:40:49.080943Z",
   "probe_version": 2,
   "statistics_note": "Availability statistics use version 2 probes only.",
   "provider": {
@@ -9,7 +9,7 @@
     "url": "https://api.gonkarouter.io/v1/chat/completions"
   },
   "current": {
-    "ts": "2026-10-24T12:06:06.319783Z",
+    "ts": "2026-10-24T12:40:48.098053Z",
     "provider": "gonkarouter",
     "name": "Gonka Router",
     "requested_model": "zai-org/GLM-5.3-Flash",
@@ -29,11 +29,11 @@
     "completion_id": null,
     "completion_created": null,
     "system_fingerprint": null,
-    "latency_ms": 1514,
-    "dns_ms": 45,
-    "connect_ms": 57,
-    "tls_ms": 74,
-    "ttfb_ms": 1514,
+    "latency_ms": 963,
+    "dns_ms": 31,
+    "connect_ms": 40,
+    "tls_ms": 62,
+    "ttfb_ms": 963,
     "prompt_tokens": null,
     "completion_tokens": null,
     "reasoning_tokens": null,
@@ -46,23 +46,23 @@
   },
   "last_24h": {
     "checks": 45,
-    "successful_checks": 35,
-    "success_pct": 77.778,
-    "failure_checks": 10,
+    "successful_checks": 34,
+    "success_pct": 75.556,
+    "failure_checks": 11,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 0,
     "timeout_pct": 0.0,
-    "upstream_saturated_checks": 5,
+    "upstream_saturated_checks": 6,
     "status_counts": {
-      "up": 35,
       "invalid_response": 3,
-      "down": 7
+      "up": 34,
+      "down": 8
     },
     "error_counts": {
       "unexpected_content": 2,
       "service_unavailable": 2,
-      "upstream_saturated": 5,
+      "upstream_saturated": 6,
       "incomplete_completion": 1
     },
     "p50_latency_ms": 6456,
@@ -70,31 +70,31 @@
     "p99_latency_ms": 15344,
     "p50_ttfb_ms": 6456,
     "p95_ttfb_ms": 11542,
-    "prompt_tokens": 1161,
-    "completion_tokens": 4870,
+    "prompt_tokens": 1133,
+    "completion_tokens": 4773,
     "reasoning_tokens": 248,
-    "total_tokens": 6031,
-    "cost_usd": 1.38713e-05
+    "total_tokens": 5906,
+    "cost_usd": 1.35838e-05
   },
   "last_7d": {
     "checks": 317,
-    "successful_checks": 269,
-    "success_pct": 84.858,
-    "failure_checks": 48,
+    "successful_checks": 268,
+    "success_pct": 84.543,
+    "failure_checks": 49,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 1,
     "timeout_pct": 0.315,
-    "upstream_saturated_checks": 27,
+    "upstream_saturated_checks": 28,
     "status_counts": {
-      "up": 269,
-      "down": 43,
+      "up": 268,
+      "down": 44,
       "timeout": 1,
       "invalid_response": 4
     },
     "error_counts": {
       "service_unavailable": 16,
-      "upstream_saturated": 27,
+      "upstream_saturated": 28,
       "curl_timeout": 1,
       "incomplete_completion": 2,
       "unexpected_content": 2
@@ -104,30 +104,30 @@
     "p99_latency_ms": 14683,
     "p50_ttfb_ms": 5568,
     "p95_ttfb_ms": 12063,
-    "prompt_tokens": 8332,
-    "completion_tokens": 34314,
+    "prompt_tokens": 8300,
+    "completion_tokens": 34147,
     "reasoning_tokens": 2090,
-    "total_tokens": 42646,
-    "cost_usd": 9.80858e-05
+    "total_tokens": 42447,
+    "cost_usd": 9.76281e-05
   },
   "all_time": {
-    "checks": 1019,
+    "checks": 1020,
     "successful_checks": 850,
-    "success_pct": 83.415,
-    "failure_checks": 169,
+    "success_pct": 83.333,
+    "failure_checks": 170,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 19,
-    "timeout_pct": 1.865,
-    "upstream_saturated_checks": 98,
+    "timeout_pct": 1.863,
+    "upstream_saturated_checks": 99,
     "status_counts": {
-      "down": 134,
+      "down": 135,
       "timeout": 19,
       "up": 850,
       "invalid_response": 16
     },
     "error_counts": {
-      "upstream_saturated": 98,
+      "upstream_saturated": 99,
       "curl_timeout": 19,
       "service_unavailable": 33,
       "incomplete_completion": 11,
@@ -158,9 +158,9 @@
     }
   },
   "monitoring_cost": {
-    "last_24h_usd": 1.38713e-05,
-    "projected_30d_usd": 0.000416139,
-    "last_24h_tokens": 6031,
-    "projected_30d_tokens": 180930
+    "last_24h_usd": 1.35838e-05,
+    "projected_30d_usd": 0.000407514,
+    "last_24h_tokens": 5906,
+    "projected_30d_tokens": 177180
   }
 }
