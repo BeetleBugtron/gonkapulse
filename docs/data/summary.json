@@ -1,6 +1,6 @@
 {
   "project": "GonkaPulse",
-  "generated_at": "2026-10-24T16:31:42.376397Z",
+  "generated_at": "2026-10-24T17:00:37.773524Z",
   "probe_version": 2,
   "statistics_note": "Availability statistics use version 2 probes only.",
   "provider": {
@@ -9,7 +9,7 @@
     "url": "https://api.gonkarouter.io/v1/chat/completions"
   },
   "current": {
-    "ts": "2026-10-24T16:31:41.473402Z",
+    "ts": "2026-10-24T17:00:36.701936Z",
     "provider": "gonkarouter",
     "name": "Gonka Router",
     "requested_model": "zai-org/GLM-5.3-Flash",
@@ -29,11 +29,11 @@
     "completion_id": null,
     "completion_created": null,
     "system_fingerprint": null,
-    "latency_ms": 880,
-    "dns_ms": 23,
-    "connect_ms": 32,
-    "tls_ms": 53,
-    "ttfb_ms": 880,
+    "latency_ms": 1045,
+    "dns_ms": 121,
+    "connect_ms": 125,
+    "tls_ms": 147,
+    "ttfb_ms": 1044,
     "prompt_tokens": null,
     "completion_tokens": null,
     "reasoning_tokens": null,
@@ -55,14 +55,14 @@
     "timeout_pct": 0.0,
     "upstream_saturated_checks": 11,
     "status_counts": {
-      "down": 12,
       "up": 34,
-      "invalid_response": 1
+      "invalid_response": 1,
+      "down": 12
     },
     "error_counts": {
-      "upstream_saturated": 11,
       "incomplete_completion": 1,
-      "service_unavailable": 1
+      "service_unavailable": 1,
+      "upstream_saturated": 11
     },
     "p50_latency_ms": 6456,
     "p95_latency_ms": 12531,
@@ -76,57 +76,57 @@
     "cost_usd": 1.32434e-05
   },
   "last_7d": {
-    "checks": 316,
-    "successful_checks": 264,
-    "success_pct": 83.544,
-    "failure_checks": 52,
+    "checks": 315,
+    "successful_checks": 262,
+    "success_pct": 83.175,
+    "failure_checks": 53,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 1,
-    "timeout_pct": 0.316,
-    "upstream_saturated_checks": 33,
+    "timeout_pct": 0.317,
+    "upstream_saturated_checks": 34,
     "status_counts": {
-      "up": 264,
-      "down": 47,
+      "up": 262,
+      "down": 48,
       "timeout": 1,
       "invalid_response": 4
     },
     "error_counts": {
       "service_unavailable": 14,
-      "upstream_saturated": 33,
+      "upstream_saturated": 34,
       "curl_timeout": 1,
       "incomplete_completion": 2,
       "unexpected_content": 2
     },
-    "p50_latency_ms": 5550,
+    "p50_latency_ms": 5541,
     "p95_latency_ms": 12158,
     "p99_latency_ms": 15344,
-    "p50_ttfb_ms": 5550,
+    "p50_ttfb_ms": 5541,
     "p95_ttfb_ms": 12158,
-    "prompt_tokens": 8172,
-    "completion_tokens": 33797,
+    "prompt_tokens": 8109,
+    "completion_tokens": 33477,
     "reasoning_tokens": 2090,
-    "total_tokens": 41969,
-    "cost_usd": 9.65287e-05
+    "total_tokens": 41586,
+    "cost_usd": 9.56478e-05
   },
   "all_time": {
-    "checks": 1028,
+    "checks": 1029,
     "successful_checks": 853,
-    "success_pct": 82.977,
-    "failure_checks": 175,
+    "success_pct": 82.896,
+    "failure_checks": 176,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 19,
-    "timeout_pct": 1.848,
-    "upstream_saturated_checks": 104,
+    "timeout_pct": 1.846,
+    "upstream_saturated_checks": 105,
     "status_counts": {
-      "down": 140,
+      "down": 141,
       "timeout": 19,
       "up": 853,
       "invalid_response": 16
     },
     "error_counts": {
-      "upstream_saturated": 104,
+      "upstream_saturated": 105,
       "curl_timeout": 19,
       "service_unavailable": 33,
       "incomplete_completion": 11,
