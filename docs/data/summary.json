@@ -1,6 +1,6 @@
 {
   "project": "GonkaPulse",
-  "generated_at": "2026-10-26T18:39:41.569939Z",
+  "generated_at": "2026-10-26T19:24:39.243250Z",
   "probe_version": 2,
   "statistics_note": "Availability statistics use version 2 probes only.",
   "provider": {
@@ -9,7 +9,7 @@
     "url": "https://api.gonkarouter.io/v1/chat/completions"
   },
   "current": {
-    "ts": "2026-10-26T18:39:40.446551Z",
+    "ts": "2026-10-26T19:24:38.343719Z",
     "provider": "gonkarouter",
     "name": "Gonka Router",
     "requested_model": "zai-org/GLM-5.3-Flash",
@@ -29,11 +29,11 @@
     "completion_id": null,
     "completion_created": null,
     "system_fingerprint": null,
-    "latency_ms": 1100,
-    "dns_ms": 171,
-    "connect_ms": 217,
-    "tls_ms": 271,
-    "ttfb_ms": 1100,
+    "latency_ms": 876,
+    "dns_ms": 174,
+    "connect_ms": 180,
+    "tls_ms": 200,
+    "ttfb_ms": 876,
     "prompt_tokens": null,
     "completion_tokens": null,
     "reasoning_tokens": null,
@@ -45,25 +45,25 @@
     "rate_limit_reset": "60s"
   },
   "last_24h": {
-    "checks": 37,
+    "checks": 36,
     "successful_checks": 23,
-    "success_pct": 62.162,
-    "failure_checks": 14,
+    "success_pct": 63.889,
+    "failure_checks": 13,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 2,
-    "timeout_pct": 5.405,
-    "upstream_saturated_checks": 10,
+    "timeout_pct": 5.556,
+    "upstream_saturated_checks": 8,
     "status_counts": {
-      "down": 10,
+      "down": 8,
       "up": 23,
       "timeout": 2,
-      "auth_error": 2
+      "auth_error": 3
     },
     "error_counts": {
-      "upstream_saturated": 10,
+      "upstream_saturated": 8,
       "curl_timeout": 2,
-      "insufficient_balance": 2
+      "insufficient_balance": 3
     },
     "p50_latency_ms": 6179,
     "p95_latency_ms": 26960,
@@ -77,57 +77,57 @@
     "cost_usd": 8.2754e-06
   },
   "last_7d": {
-    "checks": 303,
-    "successful_checks": 231,
-    "success_pct": 76.238,
+    "checks": 302,
+    "successful_checks": 230,
+    "success_pct": 76.159,
     "failure_checks": 72,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 4,
-    "timeout_pct": 1.32,
-    "upstream_saturated_checks": 51,
+    "timeout_pct": 1.325,
+    "upstream_saturated_checks": 50,
     "status_counts": {
-      "up": 231,
-      "down": 61,
+      "up": 230,
+      "down": 60,
       "timeout": 4,
       "invalid_response": 5,
-      "auth_error": 2
+      "auth_error": 3
     },
     "error_counts": {
-      "upstream_saturated": 51,
+      "upstream_saturated": 50,
       "service_unavailable": 10,
       "curl_timeout": 4,
       "incomplete_completion": 2,
       "unexpected_content": 3,
-      "insufficient_balance": 2
+      "insufficient_balance": 3
     },
     "p50_latency_ms": 5474,
-    "p95_latency_ms": 14644,
+    "p95_latency_ms": 14683,
     "p99_latency_ms": 23333,
     "p50_ttfb_ms": 5474,
-    "p95_ttfb_ms": 14644,
-    "prompt_tokens": 7189,
-    "completion_tokens": 30225,
-    "reasoning_tokens": 2119,
-    "total_tokens": 37414,
-    "cost_usd": 8.60522e-05
+    "p95_ttfb_ms": 14683,
+    "prompt_tokens": 7160,
+    "completion_tokens": 30139,
+    "reasoning_tokens": 2046,
+    "total_tokens": 37299,
+    "cost_usd": 8.578769999999999e-05
   },
   "all_time": {
-    "checks": 1119,
+    "checks": 1120,
     "successful_checks": 911,
-    "success_pct": 81.412,
-    "failure_checks": 208,
+    "success_pct": 81.339,
+    "failure_checks": 209,
     "rate_limited_checks": 0,
     "rate_limited_pct": 0.0,
     "timeout_checks": 22,
-    "timeout_pct": 1.966,
+    "timeout_pct": 1.964,
     "upstream_saturated_checks": 129,
     "status_counts": {
       "down": 167,
       "timeout": 22,
       "up": 911,
       "invalid_response": 17,
-      "auth_error": 2
+      "auth_error": 3
     },
     "error_counts": {
       "upstream_saturated": 129,
@@ -135,7 +135,7 @@
       "service_unavailable": 35,
       "incomplete_completion": 11,
       "unexpected_content": 6,
-      "insufficient_balance": 2
+      "insufficient_balance": 3
     },
     "p50_latency_ms": 5694,
     "p95_latency_ms": 15514,
