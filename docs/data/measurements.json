@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-09T02:55:20.052217Z",
+  "generated_at": "2026-11-09T10:52:40.254438Z",
   "measurements": [
     {
       "ts": "2026-10-05T12:04:04.106733Z",
@@ -47199,6 +47199,42 @@
       "rate_limit_limit": null,
       "rate_limit_remaining": null,
       "rate_limit_reset": null
+    },
+    {
+      "ts": "2026-11-09T10:52:34.680680Z",
+      "provider": "gonkarouter",
+      "name": "Gonka Router",
+      "requested_model": "zai-org/GLM-5.3-Flash",
+      "probe_version": 2,
+      "fallback_disabled": true,
+      "status": "up",
+      "http": 200,
+      "actual_model": "zai-org/GLM-5.3-Flash",
+      "model_verified": true,
+      "validation_error": null,
+      "error_code": null,
+      "error_type": null,
+      "error_message": null,
+      "curl_exit": 0,
+      "fallback": null,
+      "request_id": "req-1794221555018028625-36619476",
+      "completion_id": "devshard-161799-1033",
+      "completion_created": 1794221555,
+      "system_fingerprint": "vllm-0.30.0-tp2-41d2c8b5",
+      "latency_ms": 5485,
+      "dns_ms": 21,
+      "connect_ms": 71,
+      "tls_ms": 126,
+      "ttfb_ms": 5485,
+      "prompt_tokens": 32,
+      "completion_tokens": 114,
+      "reasoning_tokens": 98,
+      "total_tokens": 146,
+      "cost_usd": 3.358e-07,
+      "retry_after": null,
+      "rate_limit_limit": 200,
+      "rate_limit_remaining": 199,
+      "rate_limit_reset": "60s"
     }
   ]
 }
